@@ -3,7 +3,8 @@ from datetime import datetime
 
 class Student:
     """Это Ученик"""
-    def __init__(self, name:str):
+    def __init__(self, name:str, id:int | None = None):
+        self.id =id
         self.name = name
 
     def __repr__(self):
@@ -12,9 +13,10 @@ class Student:
 
 class Subscription:
     """Это абонeмент"""
-    def __init__(self, owner: Student, count_lession: int = 0):
+    def __init__(self, owner: Student, total_visits: int = 0, id:int | None = None):
+        self.id= id
         self.owner: Student = owner
-        self.total_visits: int = count_lession
+        self.total_visits: int = total_visits
 
     def payment(self):
         """Алгоритм списания"""

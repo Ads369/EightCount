@@ -1,31 +1,13 @@
-# ## UseCase:
-# 1. Человек приходит
-# 2. Администратор прожимает кнопку "Пришёл"
-# 3. Проверяет есть ли у пользователя деньги на счету 
-# 4. Если есть - списывает 
-# 5. Записывает дату и время
-# 6. Сиестема должна показать "Успешно" или "Недостаточно средств"
-from storage import students, subscriptions
-from service import add_student, add_subscription, check_in
+from storage import (
+    init_db,
+)
 
+from service import demo
 
+def main():
+   """Создаёт БД и запускает проверку"""
+   init_db()
+   demo()
 
-add_student("Алексей")
-add_student('Роман')
-# add_student("Коля")
-
-
-add_subscription('Алексей', 2)
-add_subscription('Роман', 1)
-# add_subscription("Коля", 2)
-
-print(check_in("Алексей"))
-print(check_in("Алексей"))
-print(check_in("Алексей"))
-print(check_in("Роман"))
-# # print(check_in("Роман"))
-# print(check_in("Коля"))
-
-print(students)
-print(subscriptions)
-
+if __name__ == "__main__":
+    main()

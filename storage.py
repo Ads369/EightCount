@@ -23,7 +23,7 @@ def init_db():
     conn.close()
 
 def get_connection():
-    """Открываем соединение с БД"""
+    """Соединение с БД"""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -39,7 +39,7 @@ def insert_student(name: str):
     return student_id
 
 def get_student_by_name(name:str):
-    """Ищет студента по имени. Возвращает Student или None"""
+    """Ищет студента по имени"""
     conn = get_connection()
     row = conn.execute(
         "SELECT id, name FROM students WHERE name = ?", (name,)

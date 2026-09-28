@@ -13,7 +13,7 @@ from storage import (
 )
 
 def add_student(name:str):
-    """Добавляет ученика"""
+    """Добавляет Студента"""
     student_id = insert_student(name)
     return f"Пользователь {name} добавлен, id={student_id}"
 
@@ -54,7 +54,7 @@ def print_subscriptions():
     """Выводит подписки пользователей"""
     print("\n Подписки:")
     for sub in get_all_subscriptions():
-        print(f"id={sub.id}, owner={sub.owner.name}, "
+        print(f"id={sub.id}, owner={sub.owner.name},"
               f"total_visits={sub.total_visits}")
 
 def demo():

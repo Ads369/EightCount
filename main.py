@@ -2,20 +2,9 @@ from fastapi import FastAPI
 
 from routes import router
 
-from storage import (
-    init_db,
-)
-
-from service import demo
-
-
 app = FastAPI(title="EightCount")
 app.include_router(router)
 
-def main():
-   """Создаёт БД и запускает проверку"""
-   init_db()
-   demo()
 
 if __name__ == "__main__":
     import uvicorn

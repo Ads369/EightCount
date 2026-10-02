@@ -1,5 +1,6 @@
 from typing import Protocol
 
+
 class Student:
     """Это Ученик"""
 
@@ -56,8 +57,8 @@ class StorageRepository(Protocol):
     def get_all_subscriptions(self):
         """Все подписки"""
 
-    def delete_subscriptions_by_student(self,student_id:int):
+    def delete_subscription_student(self, student_id:int):
         """Удалить подписку у ученика"""
 
-    def delete_student(self,student_id:int):
+    def delete_student(self, student_id:int):
         """Удалить ученика"""

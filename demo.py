@@ -1,20 +1,9 @@
-from service import (
-    SubscriptionService,
-)
-
-service = SubscriptionService()
+from app import Application
 
 
 def main():
-    """Создаёт БД и запускает проверку"""
-    print(service.add_student("Алексей"))
-    # print(add_subscription("Алексей", 2))
-    # print(check_in("Алексей"))
-    # print_students()
-    # print_subscriptions()
-    # print(remove_student_with_sub("Алексей"))
-
+    app = Application("EightCount.db")
+    app.run()
 
 if __name__ == "__main__":
-    print("qwe")
     main()

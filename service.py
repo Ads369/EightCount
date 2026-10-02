@@ -8,6 +8,9 @@ class SubscriptionService:
 
     def add_student(self, name: str):
         """Добавляет Студента"""
+        existing = self.repo.get_student_by_name(name)
+        if existing is not None:
+            return f"Ученик {name} уже существует, id={existing.id}"
         student_id = self.repo.insert_student(name)
         return f"Пользователь {name} добавлен, id={student_id}"
 

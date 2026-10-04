@@ -2,7 +2,15 @@ from fastapi import FastAPI
 
 from app import Application
 from routes import router
+import logging
 
+
+
+logging.basicConfig(
+    level = logging.INFO,
+    format = "%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
+    datefmt= "%H:%M:%S"
+)
 
 application = Application("EightCount.db")
 service = application.service

@@ -1,5 +1,8 @@
 from domain import StorageRepository
+import logging
+from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError
 
+logger = logging.getLogger(__name__)
 
 class SubscriptionService:
     def __init__(self, repo: StorageRepository):
@@ -24,11 +27,26 @@ class SubscriptionService:
 
     def check_in(self, owner: str):
         """Проверка"""
+        logger.info(f'Запрос на списание подписки: {owner}')
+        
+        student = self.repo.get_student_by_name(owner)
+        if student is None:
+            logger.warning(f'Ученик не найден {owner}')
+            raise StudentNotFoundError(f'Ученик {owner} не найден')
+        
         sub = self.repo.get_subscription_by_student_name(owner)
         if sub is None:
-            return f"Подписка для {owner} не найдена"
+            logger.warning(f"Подписка не найдена: {owner}")
+            raise SubscriptionNotFoundError(f"Подписка для {owner} не найден")
+        
+        if sub.total_visits <= 0:
+            logger.warning(f'Занятия закончились: {owner}')
+            raise NoLessionsLeftError(f'У {owner} закончились занятия')
+        
         result = sub.payment()
         self.repo.update_subscription_visits(sub.id, sub.total_visits)
+
+        logger.info(f'Списание прошло успешно: {owner}, осталось подписок = {sub.total_visits}')
         return result
 
     def remove_student_with_sub(self, name: str):

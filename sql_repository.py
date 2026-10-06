@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 class SqliteRepository:
     def __init__(self, db_path: str = "EightCount.db"):
         self.db_path = db_path
+        self.init_db()
 
     def _get_connection(self):
         """Соединение с БД"""
@@ -44,7 +45,7 @@ class SqliteRepository:
 
     def get_student_by_name(self, name:str):
         """Ищет студента по имени"""
-        logger.debug(f"Поиск стулента в БД: {name}")
+        logger.debug(f"Поиск студента в БД: {name}")
 
         conn = self._get_connection()
         row = conn.execute(
@@ -138,7 +139,7 @@ class SqliteRepository:
         "Удалить подписку у пользователя"
         conn= self._get_connection()
         conn.execute(
-            "DELETE  FROM subscriptions WHERE student_id = ?",
+            "DELETE FROM subscriptions WHERE student_id = ?",
             (student_id,)
         )
         conn.commit()

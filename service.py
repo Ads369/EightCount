@@ -1,6 +1,6 @@
 from domain import StorageRepository
 import logging
-from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError
+from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +11,12 @@ class SubscriptionService:
 
     def add_student(self, name: str):
         """Добавляет Студента"""
+        logger.info(f'Запрос на добавление: {name}')
         existing = self.repo.get_student_by_name(name)
         if existing is not None:
-            return f"Ученик {name} уже существует, id={existing.id}"
+            logger.warning("Ошибка в добавлении ученика")
         student_id = self.repo.insert_student(name)
+        logger.info(f'Добавлен: {name}')
         return f"Пользователь {name} добавлен, id={student_id}"
 
     def add_subscription(self, owner: str, total_visits: int):
@@ -31,13 +33,13 @@ class SubscriptionService:
         
         student = self.repo.get_student_by_name(owner)
         if student is None:
-            logger.warning(f'Ученик не найден {owner}')
+            logger.warning(f'Ученик {owner} не найден ')
             raise StudentNotFoundError(f'Ученик {owner} не найден')
         
         sub = self.repo.get_subscription_by_student_name(owner)
         if sub is None:
             logger.warning(f"Подписка не найдена: {owner}")
-            raise SubscriptionNotFoundError(f"Подписка для {owner} не найден")
+            raise SubscriptionNotFoundError(f"Подписка для {owner} не найдена")
         
         if sub.total_visits <= 0:
             logger.warning(f'Занятия закончились: {owner}')

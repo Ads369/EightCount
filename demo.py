@@ -8,15 +8,15 @@ logging.basicConfig(
 )
 
 from app import Application
-from exceptions import DomainError
+from exceptions import DomainError, DbError
 
-
-def check(service, name):
+def test(func, *args):
     try:
-        print(f"OK: {service.check_in(name)}")
+        print(f"{func(*args)}")
     except DomainError as e:
         print(f"{type(e).__name__}: {e}")
-
+    except DbError as e:
+        print(f"DbError: {e}")
 
 def main():
     if os.path.exists("demo_test.db"):
@@ -24,21 +24,10 @@ def main():
 
     service = Application("demo_test.db").service
 
-    service.add_student("Алексей")
-    service.add_subscription("Алексей", 3)
-    check(service, "Алексей")
-
-    # service.add_student("Роман")
-    # service.add_subscription("Роман", 1)
-    # check(service, "Роман")
-    # check(service, "Роман")
-
-    # service.add_student("Иван")
-    # check(service, "Иван")
-
-    # service.add_student("Виктор")
-    # check(service, "Виктор")
-
+    test(service.add_student,"Алексей")
+    test(service.add_subscription,"Алексей",2)
+    test(service.check_in,"Алексей")
 
 if __name__ == "__main__":
     main()
+    logging.info("all good")

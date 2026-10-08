@@ -16,3 +16,7 @@ class SubscriptionNotFoundError(DomainError):
 class NoLessionsLeftError(DomainError):
     """У ученика закончились занятия"""
     pass
+
+class DbError(Exception):
+    """Ошибка БД"""
+    pass

@@ -1,6 +1,7 @@
 import sqlite3
 import logging
 from domain import Student, Subscription
+from exceptions import DbError
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +36,17 @@ class SqliteRepository:
 
     def insert_student(self, name: str):
         """Добавляем студента"""
-        conn = self._get_connection()
-        cur = conn.execute("INSERT INTO students (name) VALUES (?)", (name,))
-        conn.commit()
-        student_id = cur.lastrowid
-        conn.close()
-        return student_id
+        try:
+            conn = self._get_connection()
+            cur = conn.execute("INSERT INTO students (name) VALUES (?)", (name,))
+            raise
+            conn.commit()
+            student_id = cur.lastrowid
+            conn.close()
+            return student_id
+        except:
+            logger.warning("Не получилось добавить ученика")
+            raise DbError("Ошибка БД")
 
 
     def get_student_by_name(self, name:str):

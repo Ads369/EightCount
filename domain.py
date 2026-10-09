@@ -39,7 +39,7 @@ class StorageRepository(Protocol):
     def insert_student(self, name: str):
         """Добавить ученика"""
 
-    def insert_subscription(self, student_id:int, total_visits:int):
+    def insert_subscription(self, student_id, total_visits:int):
         """Добавить подписку"""
 
     def get_student_by_name(self, name:str):

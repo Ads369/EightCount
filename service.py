@@ -23,7 +23,7 @@ class SubscriptionService:
         """Добавляет подписку"""
         student = self.repo.get_student_by_name(owner)
         if student is None:
-            return f"Пользователь {owner} не найден"
+            return ""
         sub_id = self.repo.insert_subscription(student.id, total_visits)
         return f"Подписка для {owner} создана, id={sub_id}"
 

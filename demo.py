@@ -1,5 +1,7 @@
 import os
 import logging
+import stat
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,8 +26,12 @@ def main():
 
     service = Application("demo_test.db").service
 
+    os.chmod("demo_test.db", stat.S_IREAD)
+
     test(service.add_student,"Алексей")
     test(service.add_subscription,"Алексей",2)
+    test(service.check_in,"Алексей")
+    test(service.check_in,"Алексей")
     test(service.check_in,"Алексей")
 
 if __name__ == "__main__":

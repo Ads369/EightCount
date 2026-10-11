@@ -43,9 +43,9 @@ class SqliteRepository:
             student_id = cur.lastrowid
             conn.close()
             return student_id
-        except sqlite3.Error:
+        except sqlite3.Error as e:
             logger.error(f"Не получилось добавить ученика ")
-            raise DbError(f" Ошибка БД ")
+            raise DbError(f" Ошибка БД {e} ")
 
 
     def get_student_by_name(self, name:str):

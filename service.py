@@ -13,7 +13,7 @@ class SubscriptionService:
         """Добавляет Студента"""
         logger.info(f'Запрос на добавление: {name}')
         student_id = self.repo.insert_student(name)
-        logger.info(f'Добавлен: {name} id= {student_id}')
+        logger.info(f'Добавлен: {name} id = {student_id}')
 
     def add_subscription(self, owner: str, total_visits: int):
         """Добавляет подписку"""

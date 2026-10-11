@@ -19,7 +19,7 @@ from validators import validate_add_student, validate_add_subscription
 def test(func, *args):
     """Тест на выявление проблем"""
     try:
-        print(f"{func(*args)}")
+        func(*args)
     except DomainError as e:
         print(f"{type(e).__name__}: {e}")
     except DbError as e:
@@ -47,14 +47,14 @@ def main():
 
     service = Application("demo_test.db").service
 
-    test(validate_add_student,service, "Алексей")
-    test(validate_add_subscription,service,"Алексей",2)
+    test(validated_add_student,service, "Алексей")
+    test(validated_add_subscription,service,"Алексей",2)
     test(service.check_in,"Алексей")
 
-    # """Запрос с ошибкой"""
-    # test(validate_add_student,service,"123123")
-    # test(validate_add_subscription,service,"123123",3)
-    # test(service.check_in,"123123")
+    """Запрос с ошибкой"""
+    test(validated_add_student,service,"123123")
+    test(validated_add_subscription,service,"123123","qwe")
+    test(service.check_in,"123123")
 
 if __name__ == "__main__":
     main()

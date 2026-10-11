@@ -62,7 +62,7 @@ class SqliteRepository:
             logger.error(f"Ученик не найден в БД: {name}")
             return None
         
-        logger.info(f"Ученик найден: id={row['id']}, name={row['name']}")
+        logger.info(f"Ученик найден: id = {row['id']}, name = {row['name']}")
         return Student(id=row["id"], name=row["name"])
 
     def insert_subscription(self, student_id:int, total_visits: int):

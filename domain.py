@@ -24,9 +24,7 @@ class Subscription:
         """Алгоритм списания"""
         if self.total_visits > 0:
             self.total_visits -= 1
-            return f"{self.owner} занятие списалось"
-        else:
-            return f"{self.owner} занятия закончились"
+            # return self.owner
 
     def __repr__(self):
         return f"Владелец: {self.owner} Посещений осталось: {self.total_visits}"

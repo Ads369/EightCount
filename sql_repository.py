@@ -50,7 +50,7 @@ class SqliteRepository:
 
     def get_student_by_name(self, name:str):
         """Ищет студента по имени"""
-        logger.debug(f"Поиск студента в БД: {name}")
+        logger.info(f"Поиск студента в БД: {name}")
 
         conn = self._get_connection()
         row = conn.execute(
@@ -59,10 +59,10 @@ class SqliteRepository:
         conn.close()
 
         if row is None:
-            logger.debug(f"Ученик не найден в БД: {name}")
+            logger.error(f"Ученик не найден в БД: {name}")
             return None
         
-        logger.debug(f"Ученик найден: id={row['id']}, name={row['name']}")
+        logger.info(f"Ученик найден: id={row['id']}, name={row['name']}")
         return Student(id=row["id"], name=row["name"])
 
     def insert_subscription(self, student_id:int, total_visits: int):
@@ -79,7 +79,7 @@ class SqliteRepository:
 
     def get_subscription_by_student_name(self, name: str):
         """Ищет подписку по имени студента"""
-        logger.debug(f'Поиск подписки для: {name}')
+        logger.info(f'Поиск подписки для: {name}')
 
         conn = self._get_connection()
         row = conn.execute("""
@@ -93,7 +93,7 @@ class SqliteRepository:
         conn.close()
 
         if row is None:
-            logger.debug(f'Подписка не найдена для {name}')
+            logger.error(f'Подписка не найдена для {name}')
             return None
         
         student = Student(id=row["student_id"], name=row["name"])

@@ -12,8 +12,9 @@ logging.basicConfig(
 from app import Application
 from exceptions import DomainError, DbError                                                                  
 from pydantic import ValidationError
-from models import AddStudentRequest, AddSubscriptionRequest
 from validators import validate_add_student, validate_add_subscription
+
+
 
 def test(func, *args):
     """Тест на выявление проблем"""
@@ -49,6 +50,11 @@ def main():
     test(validate_add_student,service, "Алексей")
     test(validate_add_subscription,service,"Алексей",2)
     test(service.check_in,"Алексей")
+
+    # """Запрос с ошибкой"""
+    # test(validate_add_student,service,"123123")
+    # test(validate_add_subscription,service,"123123",3)
+    # test(service.check_in,"123123")
 
 if __name__ == "__main__":
     main()

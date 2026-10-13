@@ -1,10 +1,15 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ValidationError
+from app import Application
+from exceptions import DomainError, DbError
 
-from service import add_student, add_subscription, check_in
 
 router = APIRouter()
 
+application = Application("EightCount.db")
+service = application.service
+
+router = APIRouter()
 
 class StudentIn(BaseModel):
     name: str
@@ -12,7 +17,7 @@ class StudentIn(BaseModel):
 
 class SubscriptionIn(BaseModel):
     owner: str
-    count_lession: int = 0
+    total_visits: int = 0
 
 
 class CheckInIn(BaseModel):
@@ -21,16 +26,24 @@ class CheckInIn(BaseModel):
 
 @router.post("/students")
 def create_student(payload: StudentIn):
-    add_student(payload.name)
-    return {"status": "ok"}
+    result = service.add_student(payload.name)
+    return {"status": result}
 
 
 @router.post("/subscriptions")
 def create_subscription(payload: SubscriptionIn):
-    result = add_subscription(payload.owner, payload.count_lession)
-    return {"status": result or "ok"}
+    result = service.add_subscription(payload.owner, payload.total_visits)
+    return {"status": result}
 
 
 @router.post("/check-in")
 def check_in_route(payload: CheckInIn):
-    return {"result": check_in(payload.owner)}
+    try:
+        result = service.check_in(payload.owner)
+        return {"status": "ok", "message": result}
+    except DomainError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except DbError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except ValidationError as e:
+        raise HTTPException(status_code=404, detail=(e))

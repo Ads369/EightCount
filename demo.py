@@ -47,9 +47,9 @@ def main():
 
     service = Application("demo_test.db").service
 
-    test(validated_add_student,service, "Алексей")
-    test(validated_add_subscription,service,"Алексей",2)
-    test(service.check_in,"Алексей")
+    # test(validated_add_student,service, "Алексей")
+    # test(validated_add_subscription,service,"Алексей",2)
+    # test(service.check_in,"Алексей")
 
     """Запрос с ошибкой"""
     test(validated_add_student,service,"123123")

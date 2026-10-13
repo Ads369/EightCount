@@ -37,15 +37,13 @@ class SqliteRepository:
     def insert_student(self, name: str):
         """Добавляем студента"""
         try:
-            conn = self._get_connection()
-            cur = conn.execute("INSERT INTO students (name) VALUES (?)", (name,))
-            conn.commit()
-            student_id = cur.lastrowid
-            conn.close()
-            return student_id
+            with self._get_connection() as conn:
+                cur = conn.execute("INSERT INTO students (name) VALUES (?)", (name,))
+                conn.commit()
+                return cur.lastrowid
         except sqlite3.Error as e:
-            logger.error(f"Не получилось добавить ученика ")
-            raise DbError(f" Ошибка БД {e} ")
+            logger.error(f"Не получилось добавить ученика {e}")
+            raise DbError(f" Ошибка БД {e} ") from e
 
 
     def get_student_by_name(self, name:str):

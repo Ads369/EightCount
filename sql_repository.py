@@ -57,7 +57,7 @@ class SqliteRepository:
         conn.close()
 
         if row is None:
-            logger.error(f"Ученик не найден в БД: {name}")
+            logger.warning(f"Ученик не найден в БД: {name}")
             return None
         
         logger.info(f"Ученик найден: id = {row['id']}, name = {row['name']}")

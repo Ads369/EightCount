@@ -18,6 +18,10 @@ class NoLessionsLeftError(DomainError):
     pass
 
 
+class StudentAlreadyExistError(DomainError):
+    """Ученик уже существует"""
+    pass
+
 class DbError(Exception):
     """Ошибка БД"""
     pass

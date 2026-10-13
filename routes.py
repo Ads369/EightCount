@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ValidationError
 from app import Application
-from exceptions import DomainError, DbError
-
+from exceptions import DomainError, DbError, StudentAlreadyExistError
+from models import AddSubscriptionRequest, AddStudentRequest, CheckInIn
 
 router = APIRouter()
 
@@ -11,27 +11,27 @@ service = application.service
 
 router = APIRouter()
 
-class StudentIn(BaseModel):
-    name: str
 
-
-class SubscriptionIn(BaseModel):
-    owner: str
-    total_visits: int = 0
-
-
-class CheckInIn(BaseModel):
-    owner: str
-
+@router.get("/students")
+def show_students():
+    students = service.get_all_students()
+    return [
+        {"id": s.id, "name": s.name}
+        for s in students
+    ]
 
 @router.post("/students")
-def create_student(payload: StudentIn):
-    result = service.add_student(payload.name)
-    return {"status": result}
-
+def create_student(payload: AddStudentRequest):
+    try:
+        result = service.add_student(payload.name)
+        return {"status": result}
+    except StudentAlreadyExistError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except DbError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/subscriptions")
-def create_subscription(payload: SubscriptionIn):
+def create_subscription(payload: AddSubscriptionRequest):
     result = service.add_subscription(payload.owner, payload.total_visits)
     return {"status": result}
 

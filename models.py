@@ -9,3 +9,8 @@ class AddSubscriptionRequest(BaseModel):
     """Модель для подписки"""
     owner: str = Field(min_lenght=1, max_lenght=200)
     total_visits: int = Field(gt=0, le=1000)
+
+
+class CheckInIn(BaseModel):
+    """Модель проверки"""
+    owner: str = Field(min_length=1, max_length=200)

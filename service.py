@@ -1,6 +1,6 @@
 from domain import StorageRepository
 import logging
-from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError
+from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError, StudentAlreadyExistError
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +12,10 @@ class SubscriptionService:
     def add_student(self, name: str):
         """Добавляет Студента"""
         logger.info(f'Запрос на добавление: {name}')
+        existing = self.repo.get_student_by_name(name)
+        if existing is not None:
+            logger.error(f"Такой ученик уже существует: {name}")
+            raise StudentAlreadyExistError(f"Ученик {name} уже существует")
         student_id = self.repo.insert_student(name)
         logger.info(f'Добавлен: {name} id = {student_id}')
 
@@ -47,6 +51,10 @@ class SubscriptionService:
 
         logger.info(f'Списание прошло успешно: {owner}, осталось подписок = {sub.total_visits}')
         return result
+    
+    def get_all_students(self):
+        """Список учеников"""
+        return self.repo.get_all_students()
 
     def remove_student_with_sub(self, name: str):
         """Удаляет студента с подпиской"""
@@ -56,15 +64,3 @@ class SubscriptionService:
         self.repo.delete_subscription_student(student.id)
         self.repo.delete_student(student.id)
         return f"Пользователь {name} удалён со всеми подписками"
-
-    def print_students(self):
-        """Выводит пользователей"""
-        print("\n Пользователи:")
-        for s in self.repo.get_all_students():
-            print(f"  id={s.id}, name={s.name}")
-
-    def print_subscriptions(self):
-        """Выводит подписки пользователей"""
-        print("\n Подписки:")
-        for sub in self.repo.get_all_subscriptions():
-            print(f"id={sub.id}, owner={sub.owner.name},total_visits={sub.total_visits}")

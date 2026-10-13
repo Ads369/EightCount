@@ -1,4 +1,4 @@
-from domain import StorageRepository
+from domain import StorageRepository, Student
 import logging
 from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError, StudentAlreadyExistError
 

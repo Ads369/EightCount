@@ -57,7 +57,7 @@ class SubscriptionService:
         """Список учеников"""
         return self.repo.get_all_students()
     
-    def get_all_subscription(self)
+    def get_all_subscription(self):
         """Подписки"""
         return self.repo.get_all_subscriptions()
     

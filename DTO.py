@@ -5,7 +5,6 @@ class StudentResponse(BaseModel):
     """Ответ: студант"""
     id : int
     name : str
-    total_viists : int
 
 
 class SubscriptionResponse(BaseModel):

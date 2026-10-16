@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 
 @router.get("/students", response_model=list[StudentResponse])
 def show_students():
-    return service.get_all_students_with_balance()
+    return service.get_all_students()
+
+@router.get("/subscriptions", response_model=list[SubscriptionResponse])
+def show_subscription():
+    return service.get_all_subscription()
 
 @router.post("/students")
 def create_student(payload: AddStudentRequest):

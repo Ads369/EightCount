@@ -53,28 +53,21 @@ class SubscriptionService:
         logger.info(f'Списание прошло успешно: {owner}, осталось подписок = {sub.total_visits}')
         return result
     
-    def get_all_students(self):
-        """Список учеников"""
-        return self.repo.get_all_students()
-    
     def get_all_subscription(self):
         """Подписки"""
-        return self.repo.get_all_subscriptions()
-    
-    def get_all_students_with_balance(self):
-        """Возвращает список учеников с балансом занятий."""
-        students = self.repo.get_all_students()
-        subscriptions = self.repo.get_all_subscriptions()
-        balance_by_student = {sub.owner.id: sub.total_visits for sub in subscriptions}
+        subs = self.repo.get_all_subscriptions()
         return [
             {
                 "id": s.id,
-                "name": s.name,
-                "total_visits": balance_by_student.get(s.id, 0)
+                "owner": s.owner.name,
+                "total_visits": s.total_visits
             }
-            for s in students
+            for s in subs
         ]
-        
+    
+    def get_all_students(self):
+        """Возвращает список учеников."""
+        return self.repo.get_all_students()
 
     def remove_subscription(self, owner: str):
         """Удаляет подписку ученика. Ученик остаётся."""

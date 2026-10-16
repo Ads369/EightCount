@@ -34,46 +34,38 @@ class SqliteRepository:
         conn.commit()
         conn.close()
 
-    def insert_student(self, name: str):
-        """Добавляем студента"""
+    def insert_student(self, name: str) -> int:
+        """Добавляет ученика"""
         try:
             with self._get_connection() as conn:
-                cur = conn.execute("INSERT INTO students (name) VALUES (?)", (name,))
+                cur = conn.execute(
+                    "INSERT INTO students (name) VALUES (?)",
+                    (name,)
+                )
                 conn.commit()
                 return cur.lastrowid
         except sqlite3.Error as e:
-            logger.error(f"Не получилось добавить ученика {e}")
-            raise DbError(f" Ошибка БД {e} ") from e
+            logger.error(f"Не получилось добавить ученика: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e
 
-
-    def get_student_by_name(self, name:str):
-        """Ищет студента по имени"""
+    def get_student_by_name(self, name: str):
         logger.info(f"Поиск студента в БД: {name}")
 
-        conn = self._get_connection()
-        row = conn.execute(
-            "SELECT id, name FROM students WHERE name = ?", (name,)
-        ).fetchone()
-        conn.commit()
+        try:
+            with self._get_connection() as conn:
+                row = conn.execute(
+                    "SELECT id, name FROM students WHERE name = ?", (name,)
+                ).fetchone()
+        except sqlite3.Error as e:
+            logger.error(f"Ошибка БД: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e
 
         if row is None:
             logger.warning(f"Ученик не найден в БД: {name}")
             return None
-        
+
         logger.info(f"Ученик найден: id = {row['id']}, name = {row['name']}")
         return Student(id=row["id"], name=row["name"])
-
-    def insert_subscription(self, student_id:int, total_visits: int):
-        """Добавляем подписку"""
-        conn = self._get_connection()
-        cur = conn.execute(
-            "INSERT INTO subscriptions (student_id, total_visits) VALUES (?, ?)",
-            (student_id, total_visits)
-        )
-        conn.commit()
-        sub_id = cur.lastrowid
-        conn.close()
-        return sub_id
 
     def add_visits_to_subscription(self, student_id: int, visits: int):
         """Прибавляет занятия"""

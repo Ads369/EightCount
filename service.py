@@ -18,6 +18,7 @@ class SubscriptionService:
             raise StudentAlreadyExistError(f"Ученик {name} уже существует")
         student_id = self.repo.insert_student(name)
         logger.info(f'Добавлен: {name} id = {student_id}')
+        return name, student_id
 
     def add_subscription(self, owner: str, total_visits: int):
         """Создаёт или пополняет подписку."""
@@ -98,4 +99,5 @@ class SubscriptionService:
 
         self.repo.delete_student(student.id)
         logger.info(f"Пользователь {name} удалён")
+
 

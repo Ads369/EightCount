@@ -82,6 +82,7 @@
 | Pydantic | 2.0+ | Валидация данных |
 | SQLite | 3 | База данных |
 | uvicorn | latest | ASGI-сервер |
+| uv | latest | Управление зависимостями |
 | logging | stdlib | Логирование |
 
 ---
@@ -137,7 +138,7 @@
 | service | Бизнес-правила, domain | HTTP, SQL |
 | sql_repository | SQL, SQLite | HTTP, бизнес-правила |
 | domain | Сущности | HTTP, SQL, БД |
-| models | Pydantic, валидацию | SQL, БД |
+| requests_dto / responses_dto | Pydantic, валидацию | SQL, БД |
 
 ---
 
@@ -145,16 +146,21 @@
 
 ```
 EightCount/
-├── domain.py            # Сущности Student, Subscription + StorageRepository (Protocol)
-├── exceptions.py        # DomainError, DBError и наследники
-├── sql_repository.py    # Работа с SQLite: SQL, логгирование, преобразование ошибок
-├── service.py           # Бизнес-логика: проверки, решения
-├── models.py            # Pydantic-схемы для API
-├── app.py               # Сборка зависимостей (Application)
-├── routes.py            # HTTP-эндпоинты
-├── main.py              # Точка входа (FastAPI + uvicorn)
-├── demo.py              # Локальная проверка сценариев
-├── validators.py        # Создание Pydantic-моделей вручную (для demo)
+├── domain.py                  # Сущности Student, Subscription + StorageRepository (Protocol)
+├── exceptions.py              # DomainError, DBError и наследники
+├── sql_repository.py          # Работа с SQLite: SQL, логирование, преобразование ошибок
+├── service.py                 # Бизнес-логика: проверки, решения
+├── requests_dto.py            # Request-схемы (Pydantic) для API
+├── responses_dto.py           # Response-схемы (Pydantic) для API
+├── app.py                     # Сборка зависимостей (Application)
+├── routes.py                  # HTTP-эндпоинты
+├── main.py                    # Точка входа (FastAPI + uvicorn)
+├── demo.py                    # Локальная проверка сценариев
+├── validators.py              # Создание Pydantic-моделей вручную (для demo)
+├── test_subscription.py       # Тесты
+├── pyproject.toml             # Метаданные проекта и зависимости
+├── uv.lock                    # Зафиксированные версии зависимостей
+├── .gitignore                 # Игнорируемые файлы
 └── README.md
 ```
 
@@ -166,11 +172,31 @@ EightCount/
 | exceptions.py | Свои исключения. DomainError — родитель бизнес-ошибок |
 | sql_repository.py | Единственное место с SQL. Ловит sqlite3.Error, превращает в DBError |
 | service.py | Бизнес-логика. Не знает про HTTP и SQL |
-| models.py | Pydantic-схемы для API. Валидация входа и описание выхода |
+| requests_dto.py | Pydantic-схемы запросов. Валидация входа |
+| responses_dto.py | Pydantic-схемы ответов. Описание выхода |
 | app.py | Сборка repo и service в Application |
 | routes.py | HTTP-эндпоинты. Ловит DomainError, DBError, отдаёт HTTP-коды |
 | main.py | Запуск приложения |
 | demo.py | Локальная проверка без FastAPI |
+| validators.py | Создание Pydantic-моделей вручную для demo |
+| test_subscription.py | Тесты |
+| pyproject.toml | Метаданные проекта и зависимости |
+| uv.lock | Зафиксированные версии зависимостей |
+
+### Request DTO и Response DTO
+
+В проекте два файла с Pydantic-схемами, разделённые по направлению данных:
+
+| | requests_dto.py | responses_dto.py |
+|---|---|---|
+| Зачем | Валидация входа API | Описание выхода API |
+| Где используется | routes.py | routes.py |
+| Направление | Клиент → Сервер | Сервер → Клиент |
+| Технология | Pydantic BaseModel | Pydantic BaseModel |
+| Валидация | Есть (Field) | Есть (типы) |
+
+- requests_dto.py — что клиент присылает. Например, AddStudentRequest с полем name.
+- responses_dto.py — что сервер отдаёт. Например, StudentResponse с полями id и name.
 
 ---
 
@@ -179,7 +205,7 @@ EightCount/
 ### Требования
 
 - Python 3.10+
-- pip
+- pip или uv
 
 ### Шаги
 
@@ -199,6 +225,12 @@ source venv/bin/activate
 
 # 4. Установить зависимости
 pip install fastapi uvicorn pydantic
+```
+
+### Альтернатива — через uv
+
+```bash
+uv sync
 ```
 
 ---
@@ -576,7 +608,7 @@ DBError (отдельно)            — ошибка базы данных
 ## Соавторы
 
 - Alexandrov Dmitriy — [@Ads369](https://github.com/Ads369)
-- Gerasimov Vladislav — [@GerasimovDev-py](https://github.com/GerasimovDev-py)
+- Gerasimov Vladislav — [GerasimovDev-py](https://github.com/GerasimovDev-py)
 
 ---
 

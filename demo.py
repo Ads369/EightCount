@@ -39,22 +39,22 @@ def validated_add_subscription(service, owner, total_visits):
 
 def main():
     """Создать БД, при повторном запуске удаляет старую"""
-    if os.path.exists("demo_test.db"):
-        os.remove("demo_test.db")
+    # if os.path.exists("demo_test.db"):
+    #     os.remove("demo_test.db")
 
     """Создать БД readonly"""
     # os.chmod("demo_test.db", stat.S_IREAD)
 
-    service = Application("demo_test.db").service
+    service = Application("EightCount.db").service
 
     # test(validated_add_student,service, "Алексей")
     # test(validated_add_subscription,service,"Алексей",2)
-    # test(service.check_in,"Алексей")
+    test(service.check_in,"Алексей")
 
-    """Запрос с ошибкой"""
-    test(validated_add_student,service,"123123")
-    test(validated_add_subscription,service,"123123","qwe")
-    test(service.check_in,"123123")
+    # """Запрос с ошибкой"""
+    # test(validated_add_student,service,"123123")
+    # test(validated_add_subscription,service,"123123","qwe")
+    # test(service.check_in,"123123")
 
 if __name__ == "__main__":
     main()

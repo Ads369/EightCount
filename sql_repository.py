@@ -24,9 +24,9 @@ class SqliteRepository:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE
         );
-        CREATE TABLE IF NOT EXISTS subscriptions (
+            CREATE TABLE IF NOT EXISTS subscriptions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL UNIQUE,
             total_visits INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (student_id) REFERENCES students(id)
         );
@@ -157,3 +157,34 @@ class SqliteRepository:
         )
         conn.commit()
         conn.close()
+
+    def add_visits_to_subscription(self, student_id, visits):
+        """Прибавляет занятия"""
+        try:
+            with self._get_connection() as conn:
+                row = conn.execute(
+                    "SELECT id, total_visits FROM subscriptions WHERE student_id = ?",
+                    (student_id,)
+                ).fetchone()
+
+                if row is None:
+                    cur = conn.execute(
+                        "INSERT INTO subscriptions (student_id, total_visits) VALUES (?, ?)",
+                        (student_id, visits)
+                    )
+                    conn.commit()
+                    sub_id = cur.lastrowid
+                    logger.info(f"Создана подписка sub_id={sub_id}, student_id={student_id}, visits={visits}")
+                    return sub_id
+                else:
+                    new_total = row["total_visits"] + visits
+                    conn.execute(
+                        "UPDATE subscriptions SET total_visits = ? WHERE id = ?",
+                        (new_total, row["id"])
+                    )
+                    conn.commit()
+                    logger.info(f"Обновлена подписка sub_id={row['id']}, новый баланс={new_total}")
+                    return row["id"]
+        except sqlite3.Error as e:
+            logger.error(f"Ошибка БД: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e

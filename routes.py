@@ -4,7 +4,6 @@ from app import Application
 from exceptions import DomainError, DbError, StudentAlreadyExistError
 from models import AddSubscriptionRequest, AddStudentRequest, CheckInIn
 
-router = APIRouter()
 
 application = Application("EightCount.db")
 service = application.service
@@ -45,5 +44,3 @@ def check_in_route(payload: CheckInIn):
         raise HTTPException(status_code=404, detail=str(e))
     except DbError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except ValidationError as e:
-        raise HTTPException(status_code=404, detail=(e))

@@ -13,11 +13,7 @@ router = APIRouter()
 
 @router.get("/students")
 def show_students():
-    students = service.get_all_students()
-    return [
-        {"id": s.id, "name": s.name}
-        for s in students
-    ]
+    return service.get_all_students_with_balance()
 
 @router.post("/students")
 def create_student(payload: AddStudentRequest):

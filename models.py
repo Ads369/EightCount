@@ -14,3 +14,13 @@ class AddSubscriptionRequest(BaseModel):
 class CheckInIn(BaseModel):
     """Модель проверки"""
     owner: str = Field(min_length=1, max_length=200)
+
+
+class DeleteSubscription(BaseModel):
+    """Модель для удаление подписки"""
+    owner: str = Field(min_length=1, max_length=200)
+
+
+class DeleteStudent(BaseModel):
+    """Модель для удаление ученика"""
+    name: str = Field(min_length=1, max_length=200)

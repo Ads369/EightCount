@@ -75,6 +75,37 @@ class SqliteRepository:
         conn.close()
         return sub_id
 
+    def add_visits_to_subscription(self, student_id: int, visits: int):
+        """Прибавляет занятия"""
+        try:
+            with self._get_connection() as conn:
+                row = conn.execute(
+                    "SELECT id, total_visits FROM subscriptions WHERE student_id = ?",
+                    (student_id,)
+                ).fetchone()
+
+                if row is None:
+                    cur = conn.execute(
+                        "INSERT INTO subscriptions (student_id, total_visits) VALUES (?, ?)",
+                        (student_id, visits)
+                    )
+                    conn.commit()
+                    sub_id = cur.lastrowid
+                    logger.info(f"Создана подписка sub_id={sub_id}, student_id={student_id}, visits={visits}")
+                    return sub_id
+                else:
+                    new_total = row["total_visits"] + visits
+                    conn.execute(
+                        "UPDATE subscriptions SET total_visits = ? WHERE id = ?",
+                        (new_total, row["id"])
+                    )
+                    conn.commit()
+                    logger.info(f"Обновлена подписка sub_id={row['id']}, новый баланс={new_total}")
+                    return row["id"]
+        except sqlite3.Error as e:
+            logger.error(f"Ошибка БД: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e
+
     def get_subscription_by_student_name(self, name: str):
         """Ищет подписку по имени студента"""
         logger.info(f'Поиск подписки для: {name}')
@@ -138,53 +169,23 @@ class SqliteRepository:
             ))
         return result
 
-    def delete_subscription_student(self, student_id:int):
-        "Удалить подписку у пользователя"
-        conn= self._get_connection()
-        conn.execute(
-            "DELETE FROM subscriptions WHERE student_id = ?",
-            (student_id,)
-        )
-        conn.commit()
-        conn.close()
-
-    def delete_student(self, student_id:int):
-        "Удалить пользователя"
-        conn = self._get_connection()
-        conn.execute(
-            "DELETE FROM students WHERE id = ?",
-            (student_id,)
-        )
-        conn.commit()
-        conn.close()
-
-    def add_visits_to_subscription(self, student_id: int, visits: int):
-        """Прибавляет занятия"""
+    def delete_subscriptions_by_student(self, student_id: int):
+        """Удаляет все подписки ученика."""
         try:
             with self._get_connection() as conn:
-                row = conn.execute(
-                    "SELECT id, total_visits FROM subscriptions WHERE student_id = ?",
-                    (student_id,)
-                ).fetchone()
-
-                if row is None:
-                    cur = conn.execute(
-                        "INSERT INTO subscriptions (student_id, total_visits) VALUES (?, ?)",
-                        (student_id, visits)
-                    )
-                    conn.commit()
-                    sub_id = cur.lastrowid
-                    logger.info(f"Создана подписка sub_id={sub_id}, student_id={student_id}, visits={visits}")
-                    return sub_id
-                else:
-                    new_total = row["total_visits"] + visits
-                    conn.execute(
-                        "UPDATE subscriptions SET total_visits = ? WHERE id = ?",
-                        (new_total, row["id"])
-                    )
-                    conn.commit()
-                    logger.info(f"Обновлена подписка sub_id={row['id']}, новый баланс={new_total}")
-                    return row["id"]
+                conn.execute("DELETE FROM subscriptions WHERE student_id = ?", (student_id,))
+                conn.commit()
         except sqlite3.Error as e:
             logger.error(f"Ошибка БД: {e}")
             raise DbError(f"Ошибка БД: {e}") from e
+
+    def delete_student(self, student_id:int):
+        "Удалить пользователя"
+        try:
+            with self._get_connection() as conn:
+                conn.execute("DELETE FROM students WHERE id = ?", (student_id,))
+                conn.commit()
+        except sqlite3.Error as e:
+            logger.error(f"Ошибка БД {e}")
+            raise DbError(f"Ошибка БД: {e}") from e 
+

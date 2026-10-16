@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ValidationError
 from app import Application
-from exceptions import DomainError, DbError, StudentAlreadyExistError
-from models import AddSubscriptionRequest, AddStudentRequest, CheckInIn
+from exceptions import DomainError, DbError, StudentAlreadyExistError, StudentNotFoundError, SubscriptionNotFoundError
+from models import AddSubscriptionRequest, AddStudentRequest, CheckInIn, DeleteStudent, DeleteSubscription
 
 
 application = Application("EightCount.db")
@@ -44,3 +44,29 @@ def check_in_route(payload: CheckInIn):
         raise HTTPException(status_code=404, detail=str(e))
     except DbError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/subscription/{owner}")
+def delete_subscription(owner:str):
+    try:
+        result = service.remove_subscription(owner)
+        return {"status":result}
+    except StudentNotFoundError as e:
+        raise HTTPException(status_code=404, detail=(str(e)))
+    except SubscriptionNotFoundError as e:
+        raise HTTPException(status_code=404, detail=(str(e)))
+    except DbError as e:
+        raise HTTPException(status_code=404, detail=(str(e)))
+
+
+@router.delete("students/{name}")
+def delete_student(name:str):
+    try:
+        result = service.remove_student_with_sub(name)
+        return {"status": result}
+    except StudentNotFoundError as e:
+        raise HTTPException(status_code=400, detail=(str(e)))
+    except SubscriptionNotFoundError as e:
+        raise HTTPException(status_code=404, detail=(str(e)))
+    except DbError as e:
+        raise HTTPException(status_code=500, detail=(str(e)))

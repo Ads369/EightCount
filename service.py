@@ -57,11 +57,34 @@ class SubscriptionService:
         """Список учеников"""
         return self.repo.get_all_students()
 
+    def remove_subscription(self, owner: str):
+        """Удаляет подписку ученика. Ученик остаётся."""
+        logger.info(f"Запрос на удаление подписки: {owner}")
+
+        student = self.repo.get_student_by_name(owner)
+        if student is None:
+            logger.warning(f"Ученик {owner} не найден")
+            raise StudentNotFoundError(f"Ученик {owner} не найден")
+
+        sub = self.repo.get_subscription_by_student_name(owner)
+        if sub is None:
+            logger.warning(f"Подписка для {owner} не найдена")
+            raise SubscriptionNotFoundError(f"Подписка для {owner} не найдена")
+
+        self.repo.delete_subscriptions_by_student(student.id)
+        logger.info(f"Подписка для {owner} удалена")
+        return f"Подписка для {owner} удалена"
+
     def remove_student_with_sub(self, name: str):
-        """Удаляет студента с подпиской"""
+        """Удаляет ученика и его подписку."""
+        logger.info(f"Запрос на удаление ученика: {name}")
+
         student = self.repo.get_student_by_name(name)
         if student is None:
-            return f"Пользователь {name} не найден"
-        self.repo.delete_subscription_student(student.id)
-        self.repo.delete_student(student.id)
-        return f"Пользователь {name} удалён со всеми подписками"
+            logger.warning(f"Ученик {name} не найден")
+            raise StudentNotFoundError(f"Ученик {name} не найден")
+
+        self.repo.delete_subscriptions_by_student(student.id)
+        logger.info(f"Ученик {name} удалён со всеми подписками")
+        return f"Ученик {name} удалён со всеми подписками"
+

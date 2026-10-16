@@ -54,7 +54,7 @@ class SqliteRepository:
         row = conn.execute(
             "SELECT id, name FROM students WHERE name = ?", (name,)
         ).fetchone()
-        conn.close()
+        conn.commit()
 
         if row is None:
             logger.warning(f"Ученик не найден в БД: {name}")
@@ -91,7 +91,7 @@ class SqliteRepository:
                     )
                     conn.commit()
                     sub_id = cur.lastrowid
-                    logger.info(f"Создана подписка sub_id={sub_id}, student_id={student_id}, visits={visits}")
+                    logger.info(f"Создана подписка для student_id = {student_id}, Посещений осталось = {visits}")
                     return sub_id
                 else:
                     new_total = row["total_visits"] + visits
@@ -100,7 +100,7 @@ class SqliteRepository:
                         (new_total, row["id"])
                     )
                     conn.commit()
-                    logger.info(f"Обновлена подписка sub_id={row['id']}, новый баланс={new_total}")
+                    logger.info(f"Баланс подписок обновлён, новый баланс = {new_total}")
                     return row["id"]
         except sqlite3.Error as e:
             logger.error(f"Ошибка БД: {e}")
@@ -119,7 +119,7 @@ class SqliteRepository:
             WHERE st.name = ?
             LIMIT 1
         """, (name,)).fetchone()
-        conn.close()
+        conn.commit()
 
         if row is None:
             logger.error(f'Подписка не найдена для {name}')
@@ -146,7 +146,7 @@ class SqliteRepository:
         """Все пользователи из БД"""
         conn = self._get_connection()
         rows = conn.execute("SELECT id, name FROM students").fetchall()
-        conn.close()
+        conn.commit()
         return [Student(id=r["id"], name=r["name"]) for r in rows]
 
     def get_all_subscriptions(self):

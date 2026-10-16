@@ -3,15 +3,17 @@ from pydantic import BaseModel, ValidationError
 from app import Application
 from exceptions import DomainError, DbError, StudentAlreadyExistError, StudentNotFoundError, SubscriptionNotFoundError
 from models import AddSubscriptionRequest, AddStudentRequest, CheckInIn, DeleteStudent, DeleteSubscription
-
+from DTO import StudentResponse, SubscriptionResponse
+import logging
 
 application = Application("EightCount.db")
 service = application.service
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
-@router.get("/students")
+@router.get("/students", response_model=list[StudentResponse])
 def show_students():
     return service.get_all_students_with_balance()
 
@@ -46,7 +48,7 @@ def check_in_route(payload: CheckInIn):
 def delete_subscription(owner:str):
     try:
         result = service.remove_subscription(owner)
-        return {"status":result}
+        return {"status": result}
     except StudentNotFoundError as e:
         raise HTTPException(status_code=404, detail=(str(e)))
     except SubscriptionNotFoundError as e:
@@ -55,10 +57,10 @@ def delete_subscription(owner:str):
         raise HTTPException(status_code=404, detail=(str(e)))
 
 
-@router.delete("students/{name}")
+@router.delete("/students/{name}")
 def delete_student(name:str):
     try:
-        result = service.remove_student_with_sub(name)
+        result = service.remove_student(name)
         return {"status": result}
     except StudentNotFoundError as e:
         raise HTTPException(status_code=400, detail=(str(e)))

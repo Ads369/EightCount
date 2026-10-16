@@ -27,7 +27,7 @@ class SubscriptionService:
             logger.warning(f"Ученик {owner} не найден")
             raise StudentNotFoundError(f"Ученик {owner} не найден")
         sub_id = self.repo.add_visits_to_subscription(student.id, total_visits)
-        logger.info(f"Подписка для {owner} обновлена, sub_id={sub_id}")
+        logger.info(f"Подписка для {owner} обновлена")
 
     def check_in(self, owner: str):
         """Проверка"""
@@ -78,7 +78,7 @@ class SubscriptionService:
 
     def remove_subscription(self, owner: str):
         """Удаляет подписку ученика. Ученик остаётся."""
-        logger.info(f"Запрос на удаление подписки: {owner}")
+        logger.warning(f"Запрос на удаление подписки {owner}")
 
         student = self.repo.get_student_by_name(owner)
         if student is None:
@@ -87,23 +87,21 @@ class SubscriptionService:
 
         sub = self.repo.get_subscription_by_student_name(owner)
         if sub is None:
-            logger.warning(f"Подписка для {owner} не найдена")
+            logger.error(f"Подписка для {owner} не найдена")
             raise SubscriptionNotFoundError(f"Подписка для {owner} не найдена")
 
         self.repo.delete_subscriptions_by_student(student.id)
         logger.info(f"Подписка для {owner} удалена")
-        return f"Подписка для {owner} удалена"
 
-    def remove_student_with_sub(self, name: str):
-        """Удаляет ученика и его подписку."""
-        logger.info(f"Запрос на удаление ученика: {name}")
+    def remove_student(self, name: str):
+        """Удаляет ученика"""
+        logger.warning(f"Запрос на удаление пользователя {name}")
 
         student = self.repo.get_student_by_name(name)
         if student is None:
             logger.warning(f"Ученик {name} не найден")
             raise StudentNotFoundError(f"Ученик {name} не найден")
 
-        self.repo.delete_subscriptions_by_student(student.id)
-        logger.info(f"Ученик {name} удалён со всеми подписками")
-        return f"Ученик {name} удалён со всеми подписками"
+        self.repo.delete_student(student.id)
+        logger.info(f"Пользователь {name} удалён")
 

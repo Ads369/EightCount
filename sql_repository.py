@@ -158,7 +158,7 @@ class SqliteRepository:
         conn.commit()
         conn.close()
 
-    def add_visits_to_subscription(self, student_id, visits):
+    def add_visits_to_subscription(self, student_id: int, visits: int):
         """Прибавляет занятия"""
         try:
             with self._get_connection() as conn:

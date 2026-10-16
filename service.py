@@ -20,13 +20,14 @@ class SubscriptionService:
         logger.info(f'Добавлен: {name} id = {student_id}')
 
     def add_subscription(self, owner: str, total_visits: int):
-        """Добавляет подписку"""
+        """Создаёт или пополняет подписку."""
+        logger.info(f"Запрос на подписку: {owner}, visits={total_visits}")
         student = self.repo.get_student_by_name(owner)
         if student is None:
-            logger.error(f"При добавлении ученика {owner} возникла ошибка")
+            logger.warning(f"Ученик {owner} не найден")
             raise StudentNotFoundError(f"Ученик {owner} не найден")
-        sub_id = self.repo.insert_subscription(student.id, total_visits)
-        logger.info(f'Подписка для {owner} добавлена sub_id = {sub_id}')
+        sub_id = self.repo.add_visits_to_subscription(student.id, total_visits)
+        logger.info(f"Подписка для {owner} обновлена, sub_id={sub_id}")
 
     def check_in(self, owner: str):
         """Проверка"""

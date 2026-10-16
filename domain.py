@@ -60,3 +60,6 @@ class StorageRepository(Protocol):
 
     def delete_student(self, student_id:int):
         """Удалить ученика"""
+    
+    def add_visits_to_subscription(self, student_id: int, visits: int) -> int:
+        """Прибавляет занятия"""

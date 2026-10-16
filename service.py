@@ -28,6 +28,7 @@ class SubscriptionService:
             raise StudentNotFoundError(f"Ученик {owner} не найден")
         sub_id = self.repo.add_visits_to_subscription(student.id, total_visits)
         logger.info(f"Подписка для {owner} обновлена")
+        return sub_id
 
     def check_in(self, owner: str):
         """Проверка"""

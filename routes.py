@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ValidationError
 from app import Application
 from exceptions import DomainError, DbError, StudentAlreadyExistError, StudentNotFoundError, SubscriptionNotFoundError
-from models import AddSubscriptionRequest, AddStudentRequest, CheckInIn, DeleteStudent, DeleteSubscription
-from DTO import StudentResponse, SubscriptionResponse
+from requests_dto import AddSubscriptionRequest, AddStudentRequest, CheckInIn, DeleteStudent, DeleteSubscription
+from responses_dto import StudentResponse, SubscriptionResponse
 import logging
 
 application = Application("EightCount.db")

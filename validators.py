@@ -1,4 +1,4 @@
-from models import AddStudentRequest, AddSubscriptionRequest
+from requests_dto import AddStudentRequest, AddSubscriptionRequest
 
 def validate_add_student(name):
     """Валидирует add_student"""

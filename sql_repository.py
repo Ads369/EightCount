@@ -158,7 +158,7 @@ class SqliteRepository:
             FROM subscriptions s
             JOIN students st ON st.id = s.student_id
         """).fetchall()
-        conn.close()
+        conn.commit()
         result = []
         for r in rows:
             student = Student(id=r["student_id"], name=r["name"])

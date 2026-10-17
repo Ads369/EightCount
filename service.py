@@ -1,5 +1,7 @@
 from domain import StorageRepository, Student
 import logging
+import os
+import time
 from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError, StudentAlreadyExistError
 
 logger = logging.getLogger(__name__)
@@ -48,7 +50,13 @@ class SubscriptionService:
         if sub.total_visits <= 0:
             logger.error(f'Занятия закончились: {owner}')
             raise NoLessionsLeftError(f'У {owner} закончились занятия')
-        
+
+        # ДЕМО: расширяем окно гонки между чтением (SELECT) и записью (UPDATE).
+        # С этим sleep несколько процессов успевают прочитать один и тот же баланс.
+        delay = float(os.environ.get("CHECK_IN_DELAY", "0"))
+        if delay:
+            time.sleep(delay)
+
         result = sub.payment()
         self.repo.update_subscription_visits(sub.id, sub.total_visits)
 

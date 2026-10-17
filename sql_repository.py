@@ -134,6 +134,33 @@ class SqliteRepository:
         conn.commit()
         conn.close()
 
+    def try_spend_visit(self, sub_id: int) -> int | None:
+        """Атомарно списывает одно занятие.
+
+        Проверка «хватает ли занятий» и вычитание выполняются одной
+        SQL-командой, поэтому несколько одновременных запросов не могут
+        списать дважды. Возвращает оставшийся баланс или None, если занятий нет.
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.execute(
+                "UPDATE subscriptions SET total_visits = total_visits - 1 "
+                "WHERE id = ? AND total_visits > 0",
+                (sub_id,),
+            )
+            conn.commit()
+            if cur.rowcount == 0:
+                return None
+            row = conn.execute(
+                "SELECT total_visits FROM subscriptions WHERE id = ?", (sub_id,)
+            ).fetchone()
+            return row["total_visits"]
+        except sqlite3.Error as e:
+            logger.error(f"Ошибка БД: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e
+        finally:
+            conn.close()
+
     def get_all_students(self) -> list[Student]:
         """Все пользователи из БД"""
         conn = self._get_connection()

@@ -1,5 +1,7 @@
 from domain import StorageRepository, Student
 import logging
+import os
+import time
 from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError, StudentAlreadyExistError
 
 logger = logging.getLogger(__name__)
@@ -32,7 +34,7 @@ class SubscriptionService:
         return sub_id
 
     def check_in(self, owner: str):
-        """Проверка"""
+        """Списание одного занятия (атомарно, защищено от гонки)."""
         logger.info(f'Запрос на списание подписки: {owner}')
         
         student = self.repo.get_student_by_name(owner)
@@ -45,15 +47,19 @@ class SubscriptionService:
             logger.error(f"Подписка не найдена: {owner}")
             raise SubscriptionNotFoundError(f"Подписка для {owner} не найдена")
         
-        if sub.total_visits <= 0:
+        # ДЕМО: расширяем окно гонки между чтением и записью.
+        # Даже с этим sleep атомарный UPDATE не даст списать дважды.
+        delay = float(os.environ.get("CHECK_IN_DELAY", "0"))
+        if delay:
+            time.sleep(delay)
+
+        remaining = self.repo.try_spend_visit(sub.id)
+        if remaining is None:
             logger.error(f'Занятия закончились: {owner}')
             raise NoLessionsLeftError(f'У {owner} закончились занятия')
-        
-        result = sub.payment()
-        self.repo.update_subscription_visits(sub.id, sub.total_visits)
 
-        logger.info(f'Списание прошло успешно: {owner}, осталось подписок = {sub.total_visits}')
-        return result
+        logger.info(f'Списание прошло успешно: {owner}, осталось занятий = {remaining}')
+        return remaining
     
     def get_all_subscription(self):
         """Подписки"""

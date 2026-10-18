@@ -1,0 +1,20 @@
+meta {
+  name: Create Subscription
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/subscriptions
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body {
+  {
+    "owner": "Алексей",
+    "total_visits": 1
+  }
+}

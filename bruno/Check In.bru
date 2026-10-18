@@ -1,0 +1,19 @@
+meta {
+  name: Check In
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/check-in
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body {
+  {
+    "owner": "Алексей"
+  }
+}

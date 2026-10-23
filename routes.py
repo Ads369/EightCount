@@ -6,7 +6,7 @@ from requests_dto import AddSubscriptionRequest, AddStudentRequest, CheckInIn, D
 from responses_dto import StudentResponse, SubscriptionResponse
 import logging
 
-application = Application("EightCount.db")
+application = Application()
 service = application.service
 
 router = APIRouter()

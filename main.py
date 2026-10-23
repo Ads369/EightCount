@@ -12,7 +12,7 @@ logging.basicConfig(
     datefmt= "%H:%M:%S"
 )
 
-application = Application("EightCount.db")
+application = Application()
 service = application.service
 
 app = FastAPI(title="EightCount")

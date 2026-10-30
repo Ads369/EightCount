@@ -98,7 +98,7 @@ class PostgresRepository:
 
     def add_visits_to_subscription(self, student_id: int, visits: int):
         """Создаёт подписку или прибавляет занятия"""
-        conn = self._get_connection()
+        conn = self._get_connection():
         try:
             with conn:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -110,32 +110,18 @@ class PostgresRepository:
                     row = cur.fetchone()
 
                     if row is None:
-                        try:
-                            cur.execute(
-                                "INSERT INTO subscriptions (student_id, total_visits) "
-                                "VALUES (%s, %s) RETURNING id",
-                                (student_id, visits),
-                            )
-                            sub_id = cur.fetchone()["id"]
-                            logger.info(f"Создана подписка для student_id = {student_id},Посещений осталось = {visits}")
-                            return sub_id
-                        except psycopg2.errors.UniqueViolation:
-                            conn.rollback()
-
-                            cur.execute("SELECT id, total_visits FROM subscriptions WHERE student_id = %s FOR UPDATE", (student_id))
-                    
-                    row = cur.fetchone()
-
-                    if row is None:
-                        cur.execute("INSERT INTO subscriptions (student_id, total_visits)"
-                                    "VALUES (%s, %s)"
-                                    "ON CONFLICT (students_id) DO UPDATE SET total_visits = subscriptions.total_visits + EXCLUDED.total_visits"
-                                    "RETURNING id",
-                                    (student_id, visits),
+                        cur.execute(
+                            "INSERT INTO subscriptions (student_id, total_visits) "
+                            "VALUES (%s, %s) "
+                            "ON CONFLICT (student_id) DO UPDATE "
+                            "SET total_visits = subscriptions.total_visits + EXCLUDED.total_visits "
+                            "RETURNING id",
+                            (student_id, visits),
                         )
                         sub_id = cur.fetchone()["id"]
+                        logger.info(f"Создана/обновлена подписка для student_id = {student_id}")
                         return sub_id
-                
+
                     new_total = row["total_visits"] + visits
                     cur.execute(
                         "UPDATE subscriptions SET total_visits = %s WHERE id = %s",
@@ -149,7 +135,6 @@ class PostgresRepository:
             raise DbError(f"Ошибка БД: {e}") from e
         finally:
             conn.close()
-
 
     def get_subscription_by_student_name(self, name: str):
         """Ишет подписку по имени"""

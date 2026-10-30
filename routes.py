@@ -4,6 +4,7 @@ from app import Application
 from exceptions import DomainError, DbError, StudentAlreadyExistError, StudentNotFoundError, SubscriptionNotFoundError
 from requests_dto import AddSubscriptionRequest, AddStudentRequest, CheckInIn, DeleteStudent, DeleteSubscription
 from responses_dto import StudentResponse, SubscriptionResponse
+import HTTPException
 import logging
 
 application = Application()
@@ -15,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 @router.get("/students", response_model=list[StudentResponse])
 def show_students():
-    return service.get_all_students()
+    try:
+        return service.get_all_students()
+    except psycopg2.OperationalError:
+        raise HTTPException(status_code = 503, detail= "БД временно недоступна")
+
 
 @router.get("/subscriptions", response_model=list[SubscriptionResponse])
 def show_subscription():

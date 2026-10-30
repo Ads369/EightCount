@@ -5,10 +5,10 @@ from main import app
 client = TestClient(app)
 
 @pytest.mark.parametrize("bad_payload", [
-    {"student_id": "НЕ_ЧИСЛО", "visits": 1},
-    {"student_id": 1, "visits": "МНОГО"},
-    {"student_id": 1, "visits": -5},
-    {"student_id": None, "visits": 1},
+{"owner": "Ivan", "total_visits": "МНОГО"},
+    {"owner": "", "total_visits": 1},
+    {"owner": "Ivan", "total_visits": -5},
+    {"owner": None, "total_visits": 1},
     {}
 ])
 def test_api_rejects_bad_data_gracefully(bad_payload):

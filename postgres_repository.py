@@ -110,15 +110,21 @@ class PostgresRepository:
                     row = cur.fetchone()
 
                     if row is None:
-                        cur.execute(
-                            "INSERT INTO subscriptions (student_id, total_visits) "
-                            "VALUES (%s, %s) RETURNING id",
-                            (student_id, visits),
-                        )
-                        sub_id = cur.fetchone()["id"]
-                        logger.info(f"Создана подписка для student_id = {student_id},Посещений осталось = {visits}")
-                        return sub_id
+                        try:
+                            cur.execute(
+                                "INSERT INTO subscriptions (student_id, total_visits) "
+                                "VALUES (%s, %s) RETURNING id",
+                                (student_id, visits),
+                            )
+                            sub_id = cur.fetchone()["id"]
+                            logger.info(f"Создана подписка для student_id = {student_id},Посещений осталось = {visits}")
+                            return sub_id
+                        except psycopg2.errors.UniqueViolation:
+                            conn.rollback()
 
+                            cur.execute("SELECT id, total_visits FROM subscriptions WHERE student_id = %s FOR UPDATE", (student_id))
+                    
+                    row = cur.fetchone()
                     new_total = row["total_visits"] + visits
                     cur.execute(
                         "UPDATE subscriptions SET total_visits = %s WHERE id = %s",

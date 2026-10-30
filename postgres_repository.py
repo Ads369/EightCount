@@ -125,6 +125,17 @@ class PostgresRepository:
                             cur.execute("SELECT id, total_visits FROM subscriptions WHERE student_id = %s FOR UPDATE", (student_id))
                     
                     row = cur.fetchone()
+
+                    if row is None:
+                        cur.execute("INSERT INTO subscriptions (student_id, total_visits)"
+                                    "VALUES (%s, %s)"
+                                    "ON CONFLICT (students_id) DO UPDATE SET total_visits = subscriptions.total_visits + EXCLUDED.total_visits"
+                                    "RETURNING id",
+                                    (student_id, visits),
+                        )
+                        sub_id = cur.fetchone()["id"]
+                        return sub_id
+                
                     new_total = row["total_visits"] + visits
                     cur.execute(
                         "UPDATE subscriptions SET total_visits = %s WHERE id = %s",
@@ -132,6 +143,7 @@ class PostgresRepository:
                     )
                     logger.info(f"Баланс подписок обновлён, новый баланс = {new_total}")
                     return row["id"]
+
         except psycopg2.Error as e:
             logger.error(f"Ошибка БД: {e}")
             raise DbError(f"Ошибка БД: {e}") from e

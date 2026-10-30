@@ -4,7 +4,7 @@ from app import Application
 from exceptions import DomainError, DbError, StudentAlreadyExistError, StudentNotFoundError, SubscriptionNotFoundError
 from requests_dto import AddSubscriptionRequest, AddStudentRequest, CheckInIn, DeleteStudent, DeleteSubscription
 from responses_dto import StudentResponse, SubscriptionResponse
-import HTTPException
+from fastapi import HTTPException
 import logging
 
 application = Application()

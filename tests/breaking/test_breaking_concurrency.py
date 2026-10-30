@@ -8,6 +8,7 @@ def test_concurrent_inserts_dont_create_duplicates():
     conn = psycopg2.connect(dbname="appdb", user="appuser", password="apppassword", host="localhost", port="5432")
     with conn.cursor() as cur:
         cur.execute("DELETE FROM subscriptions WHERE student_id = %s", (student_id,))
+        cur.execute("INSERT INTO students (id, name) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (student_id, "Concurrency Test Student"))
     conn.commit()
 
     errors = []

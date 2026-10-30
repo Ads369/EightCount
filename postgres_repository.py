@@ -21,7 +21,7 @@ class PostgresRepository:
     def _get_connection(self):
         """Соединение с PostgreSQL. Курсор создаётся отдельно в каждом методе."""
         try:
-            return psycopg2.connect(self.dsn)
+            return psycopg2.connect(self.dsn, connect_timeout=3)
         except psycopg2.Error as e:
             logger.error(f"Не удалось подключиться к БД: {e}")
             raise DbError(f"Ошибка подключения к БД: {e}") from e

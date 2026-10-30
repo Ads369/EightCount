@@ -98,7 +98,7 @@ class PostgresRepository:
 
     def add_visits_to_subscription(self, student_id: int, visits: int):
         """Создаёт подписку или прибавляет занятия"""
-        conn = self._get_connection():
+        conn = self._get_connection()
         try:
             with conn:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:

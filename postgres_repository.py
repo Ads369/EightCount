@@ -21,7 +21,7 @@ class PostgresRepository:
     def _get_connection(self):
         """Соединение с PostgreSQL. Курсор создаётся отдельно в каждом методе."""
         try:
-            return psycopg2.connect(self.dsn)
+            return psycopg2.connect(self.dsn, connect_timeout=3)
         except psycopg2.Error as e:
             logger.error(f"Не удалось подключиться к БД: {e}")
             raise DbError(f"Ошибка подключения к БД: {e}") from e
@@ -112,11 +112,14 @@ class PostgresRepository:
                     if row is None:
                         cur.execute(
                             "INSERT INTO subscriptions (student_id, total_visits) "
-                            "VALUES (%s, %s) RETURNING id",
+                            "VALUES (%s, %s) "
+                            "ON CONFLICT (student_id) DO UPDATE "
+                            "SET total_visits = subscriptions.total_visits + EXCLUDED.total_visits "
+                            "RETURNING id",
                             (student_id, visits),
                         )
                         sub_id = cur.fetchone()["id"]
-                        logger.info(f"Создана подписка для student_id = {student_id},Посещений осталось = {visits}")
+                        logger.info(f"Создана/обновлена подписка для student_id = {student_id}")
                         return sub_id
 
                     new_total = row["total_visits"] + visits
@@ -126,12 +129,12 @@ class PostgresRepository:
                     )
                     logger.info(f"Баланс подписок обновлён, новый баланс = {new_total}")
                     return row["id"]
+
         except psycopg2.Error as e:
             logger.error(f"Ошибка БД: {e}")
             raise DbError(f"Ошибка БД: {e}") from e
         finally:
             conn.close()
-
 
     def get_subscription_by_student_name(self, name: str):
         """Ишет подписку по имени"""

@@ -2,6 +2,7 @@ import threading
 import psycopg2
 from postgres_repository import PostgresRepository
 
+"""ИНТЕГРАЦИОННЫЙ ТЕСТ"""
 def test_concurrent_inserts_dont_create_duplicates():
     student_id = 555
     

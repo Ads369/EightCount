@@ -3,6 +3,7 @@ import subprocess
 import time
 import pytest
 
+"""CИСТЕМНЫЙ ТЕСТ E2E"""
 def test_api_returns_503_when_db_is_down():
     subprocess.run(["docker", "compose", "stop", "postgres"])
     time.sleep(2)

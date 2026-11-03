@@ -11,7 +11,7 @@ def test_api_returns_503_when_db_is_down():
     try:
         with httpx.Client(base_url="http://localhost:8000", timeout=4.0) as client:
             response = client.get("/students")
-            assert response.status_code in [500, 503], f"Ожидали ошибку, получили {response.status_code}"
+            assert response.status_code in [500, 503], f"Ожидал ошибку, получили {response.status_code}"
     
     finally:
         subprocess.run(["docker", "compose", "start", "postgres"])

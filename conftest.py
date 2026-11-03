@@ -3,6 +3,7 @@ import socket
 import subprocess
 import time
 
+import psycopg2
 import pytest
 
 
@@ -46,3 +47,44 @@ def uvicorn_server():
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+
+
+@pytest.fixture
+def pg_cleanup():
+    """Регистрирует тестовые student_id и имена для удаления из PostgreSQL после теста.
+
+    Гарантирует, что интеграционные тесты не оставляют мусора в БД и не зависят
+    друг от друга при параллельном или последовательном прогоне.
+    """
+    student_ids = []
+    names = []
+
+    def register(student_id=None, name=None):
+        if student_id is not None:
+            student_ids.append(student_id)
+        if name is not None:
+            names.append(name)
+
+    yield register
+
+    if not student_ids and not names:
+        return
+
+    conn = psycopg2.connect(
+        dbname="appdb", user="appuser", password="apppassword",
+        host="localhost", port="5432",
+    )
+    try:
+        with conn.cursor() as cur:
+            for sid in student_ids:
+                cur.execute("DELETE FROM subscriptions WHERE student_id = %s", (sid,))
+                cur.execute("DELETE FROM students WHERE id = %s", (sid,))
+            for nm in names:
+                cur.execute("SELECT id FROM students WHERE name = %s", (nm,))
+                rows = cur.fetchall()
+                for (sid,) in rows:
+                    cur.execute("DELETE FROM subscriptions WHERE student_id = %s", (sid,))
+                cur.execute("DELETE FROM students WHERE name = %s", (nm,))
+        conn.commit()
+    finally:
+        conn.close()

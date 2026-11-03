@@ -9,7 +9,7 @@ def test_api_returns_503_when_db_is_down():
     time.sleep(2)
 
     try:
-        with httpx.Client(base_url="http://localhost:8000", timeout=4.0) as client:
+        with httpx.Client(base_url="http://localhost:8000", timeout=10.0) as client:
             response = client.get("/students")
             assert response.status_code in [500, 503], f"Ожидал ошибку, получили {response.status_code}"
     

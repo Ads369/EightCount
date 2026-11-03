@@ -1,4 +1,5 @@
 import concurrent.futures
+import uuid
 
 from app import Application
 from exceptions import NoLessionsLeftError
@@ -15,8 +16,9 @@ def test_check_in_spends_exactly_once_under_concurrency(tmp_path, monkeypatch):
     monkeypatch.setenv("CHECK_IN_DELAY", "0.05")
     service = Application(str(tmp_path / "test.db")).service
 
-    service.add_student("Алексей")
-    service.add_subscription("Алексей", 1)
+    name = f"Алексей {uuid.uuid4().hex[:8]}"
+    service.add_student(name)
+    service.add_subscription(name, 1)
 
     successes: list = []
     no_lessons: list = []
@@ -24,7 +26,7 @@ def test_check_in_spends_exactly_once_under_concurrency(tmp_path, monkeypatch):
 
     def attempt():
         try:
-            service.check_in("Алексей")
+            service.check_in(name)
             successes.append(1)
         except NoLessionsLeftError:
             no_lessons.append(1)

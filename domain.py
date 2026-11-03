@@ -43,9 +43,6 @@ class StorageRepository(Protocol):
     def get_subscription_by_student_name(self, name:str):
         """Получить подписку по имени ученика"""
 
-    def update_subscription_visits(self, sub_id: int, total_visits: int):
-        """Обновить количество подписок"""
-
     def try_spend_visit(self, sub_id: int) -> int | None:
         """Атомарно списать одно занятие; None, если занятий нет"""
 

@@ -172,23 +172,6 @@ class PostgresRepository:
         )
 
 
-    def update_subscription_visits(self, sub_id: int, total_visits: int):
-        """Обновляет баланс подписки"""
-        conn = self._get_connection()
-        try:
-            with conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "UPDATE subscriptions SET total_visits = %s WHERE id = %s",
-                        (total_visits, sub_id),
-                    )
-        except psycopg2.Error as e:
-            logger.error(f"Ошибка БД: {e}")
-            raise DbError(f"Ошибка БД: {e}") from e
-        finally:
-            conn.close()
-
-
     def try_spend_visit(self, sub_id: int) -> int | None:
         """Атомарно списывает одно занятие.
 

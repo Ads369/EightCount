@@ -12,5 +12,5 @@ class Application:
         if use_postgres:
             self.repo = PostgresRepository(dsn)
         else:
-            self.repo = SqliteRepository("EightCount.db")
+            self.repo = SqliteRepository(dsn or "EightCount.db")
         self.service = SubscriptionService(self.repo)

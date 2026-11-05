@@ -264,7 +264,7 @@ def test_try_spend_visit_decrements_and_stops_at_zero(
 def test_try_spend_visit_unknown_subscription_returns_none(
     repo: PostgresRepository,
 ) -> None:
-    assert repo.try_spend_visit(-1) is None
+    assert repo.try_spend_visit(999999999) is None
 
 
 def test_concurrent_spend_never_overspends(

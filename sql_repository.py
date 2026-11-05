@@ -141,6 +141,9 @@ class SqliteRepository:
         SQL-командой, поэтому несколько одновременных запросов не могут
         списать дважды. Возвращает оставшийся баланс или None, если занятий нет.
         """
+        if not isinstance(sub_id, int) or sub_id <= 0:
+            raise ValueError(f"sub_id должен быть положительным целым числом, получено: {sub_id!r}")
+
         conn = self._get_connection()
         try:
             cur = conn.execute(

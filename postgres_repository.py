@@ -179,6 +179,9 @@ class PostgresRepository:
         поэтому параллельные запросы не спишут дважды. Возвращает остаток
         или None, если занятий нет.
         """
+        if not isinstance(sub_id, int) or sub_id <= 0:
+            raise ValueError(f"sub_id должен быть положительным целым числом, получено: {sub_id!r}")
+
         conn = self._get_connection()
         try:
             with conn:

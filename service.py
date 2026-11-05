@@ -3,6 +3,14 @@ import logging
 import os
 import time
 from exceptions import SubscriptionNotFoundError, NoLessionsLeftError, StudentNotFoundError,DbError, StudentAlreadyExistError
+from validators import (
+    validate_student_name,
+    validate_subscription_owner,
+    validate_total_visits,
+    validate_check_in_owner,
+    validate_delete_student_name,
+    validate_delete_subscription_owner,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +21,7 @@ class SubscriptionService:
 
     def add_student(self, name: str):
         """Добавляет Студента"""
+        name = validate_student_name(name)
         logger.info(f'Запрос на добавление: {name}')
         existing = self.repo.get_student_by_name(name)
         if existing is not None:
@@ -24,6 +33,8 @@ class SubscriptionService:
 
     def add_subscription(self, owner: str, total_visits: int):
         """Создаёт или пополняет подписку."""
+        owner = validate_subscription_owner(owner)
+        total_visits = validate_total_visits(total_visits)
         logger.info(f"Запрос на подписку: {owner}, visits={total_visits}")
         student = self.repo.get_student_by_name(owner)
         if student is None:
@@ -35,6 +46,7 @@ class SubscriptionService:
 
     def check_in(self, owner: str):
         """Списание одного занятия (атомарно, защищено от гонки)."""
+        owner = validate_check_in_owner(owner)
         logger.info(f'Запрос на списание подписки: {owner}')
         
         student = self.repo.get_student_by_name(owner)
@@ -79,6 +91,7 @@ class SubscriptionService:
 
     def remove_subscription(self, owner: str):
         """Удаляет подписку ученика. Ученик остаётся."""
+        owner = validate_delete_subscription_owner(owner)
         logger.warning(f"Запрос на удаление подписки {owner}")
 
         student = self.repo.get_student_by_name(owner)
@@ -96,6 +109,7 @@ class SubscriptionService:
 
     def remove_student(self, name: str):
         """Удаляет ученика"""
+        name = validate_delete_student_name(name)
         logger.warning(f"Запрос на удаление пользователя {name}")
 
         student = self.repo.get_student_by_name(name)
@@ -105,5 +119,3 @@ class SubscriptionService:
 
         self.repo.delete_student(student.id)
         logger.info(f"Пользователь {name} удалён")
-
-

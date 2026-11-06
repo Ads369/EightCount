@@ -43,6 +43,12 @@ class PostgresRepository:
                 total_visits INTEGER NOT NULL DEFAULT 0
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS processed_events (
+                event_id TEXT PRIMARY KEY,
+                processed_at TIMESTAMP DEFAULT NOW()
+            )
+            """,
         )
         conn = self._get_connection()
         try:
@@ -275,6 +281,38 @@ class PostgresRepository:
                 with conn.cursor() as cur:
                     cur.execute(
                         "DELETE FROM students WHERE id = %s", (student_id,)
+                    )
+        except psycopg2.Error as e:
+            logger.error(f"Ошибка БД: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e
+        finally:
+            conn.close()
+
+    def is_event_processed(self, event_id: str) -> bool:
+        """Проверяет, обрабатывалось ли событие ранее."""
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM processed_events WHERE event_id = %s",
+                    (event_id,),
+                )
+                return cur.fetchone() is not None
+        except psycopg2.Error as e:
+            logger.error(f"Ошибка БД: {e}")
+            raise DbError(f"Ошибка БД: {e}") from e
+        finally:
+            conn.close()
+
+    def mark_event_processed(self, event_id: str) -> None:
+        """Помечает событие как обработанное."""
+        conn = self._get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO processed_events (event_id) VALUES (%s) ON CONFLICT (event_id) DO NOTHING",
+                        (event_id,),
                     )
         except psycopg2.Error as e:
             logger.error(f"Ошибка БД: {e}")

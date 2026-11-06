@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "kafka-python>=2.0.2",
     "fastapi[standard]>=0.141.1",
     "pgbenchmark>=0.0.5",
     "psycopg2-binary>=2.9.13",

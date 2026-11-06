@@ -11,7 +11,7 @@ from responses_dto import StudentResponse, SubscriptionResponse
 from fastapi import HTTPException
 import logging
 
-from kafka.producer import send_event, flush
+from kafka_integration.producer import send_event, flush
 
 application = Application()
 service = application.service
@@ -32,7 +32,7 @@ def _emit_event(topic: str, action: str, key: str, data: dict) -> None:
     }
     try:
         send_event(topic, key, json.dumps(event, ensure_ascii=False))
-        flush()
+        # Не вызываем flush() здесь — fire-and-forget, ответ клиенту не должен ждать Kafka
     except Exception as e:
         logger.error(f"Не удалось отправить событие в Kafka: {e}")
 

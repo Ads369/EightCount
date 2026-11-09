@@ -9,11 +9,11 @@ if _env_path.exists():
             key, value = line.split("=", 1)
             os.environ.setdefault(key.strip(), value.strip())
 
-KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9093")
 
 KAFKA_CLIENT_ID = "eightcount-producer"
 
-KAFKA_CONSUMER_GROUP = "eightcount-group"
+KAFKA_CONSUMER_GROUP = os.environ.get("KAFKA_CONSUMER_GROUP", "eightcount-group-v3")
 
 KAFKA_AUTO_OFFSET_RESET = "earliest"
 

@@ -18,7 +18,7 @@ from app import Application
 application = Application()
 service = application.service
 repo = service.repo
-
+print(f"[DEBUG] repo = {type(repo).__name__}", flush=True)
 
 def handle_student_event(data: dict) -> None:
     action = data.get("action")
@@ -101,7 +101,7 @@ def process_event(raw_message: str) -> None:
 
 def start_consumer() -> None:
     consumer = KafkaConsumer(
-        bootstrap_servers="localhost:9092",
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         group_id=KAFKA_CONSUMER_GROUP,
         auto_offset_reset=KAFKA_AUTO_OFFSET_RESET,
         request_timeout_ms=5000,
@@ -110,7 +110,7 @@ def start_consumer() -> None:
     consumer.subscribe(ALL_TOPICS)
 
     print(f"[consumer] Подписка на топики: {ALL_TOPICS}", flush=True)
-    print("[consumer] Ожидание сообщений... (Ctrl+C для остановки)", flush=True)
+    print("[consumer] Ожидание сообщений (Ctrl+C для остановки)", flush=True)
 
     try:
         while True:

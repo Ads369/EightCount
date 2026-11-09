@@ -21,7 +21,6 @@ async def start_producer() -> None:
         value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode("utf-8"),
         acks="all",
         request_timeout_ms=5000,
-        max_block_ms=5000,
     )
     await _producer.start()
     logger.info(
@@ -50,18 +49,16 @@ async def send_event(topic: str, value: dict) -> None:
     Бросает исключение Kafka при ошибке отправки (таймаут, недоступность).
     """
     if _producer is None:
-        raise RuntimeError(
-            "Producer не запущен. Проверь, что start_producer() вызван в lifespan FastAPI."
-        )
-
+        raise RuntimeError("Producer не запущен")
     try:
-        metadata = await _producer.send_and_wait(topic, value=value)
-        logger.info(
-            "Событие отправлено: topic=%s, partition=%s, offset=%s",
-            metadata.topic,
-            metadata.partition,
-            metadata.offset,
+        metadata = await asyncio.wait_for(
+            _producer.send_and_wait(topic, value=value),
+            timeout=5.0,
         )
+        logger.info(...)
+    except asyncio.TimeoutError:
+        logger.error("Таймаут отправки в Kafka (topic=%s)", topic)
+        raise
     except Exception as e:
         logger.error("Ошибка отправки в Kafka (topic=%s): %s", topic, e)
         raise

@@ -1,54 +1,67 @@
-import threading
-from kafka import KafkaProducer
+import json
+import logging
+from aiokafka import AIOKafkaProducer
 
 from kafka_integration.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_CLIENT_ID
 
-_producer = None
-_producer_lock = threading.Lock()
+logger = logging.getLogger(__name__)
+
+_producer: AIOKafkaProducer | None = None
 
 
-def _get_producer():
-    global _producer
-    if _producer is None:
-        with _producer_lock:
-            if _producer is None:
-                _producer = KafkaProducer(
-                    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-                    client_id=KAFKA_CLIENT_ID,
-                    request_timeout_ms=3000,
-                    max_block_ms=3000,
-                )
-    return _producer
-
-
-def _send_async(topic: str, key: str, value: str) -> None:
-    """Отправляет событие в отдельном потоке, не блокируя основной."""
-    def _do_send():
-        try:
-            producer = _get_producer()
-            producer.send(
-                topic,
-                key=key.encode("utf-8"),
-                value=value.encode("utf-8"),
-            )
-            producer.flush(timeout=2.0)
-        except Exception as e:
-            print(f"Ошибка отправки события в Kafka: {e}")
-
-    thread = threading.Thread(target=_do_send, daemon=True)
-    thread.start()
-
-
-def send_event(topic: str, key: str, value: str) -> None:
-    """Отправляет событие в указанный топик Kafka (fire-and-forget, не блокирует)."""
-    _send_async(topic, key, value)
-
-
-def flush(timeout: float = 2.0) -> None:
-    """Ждёт завершения отправки всех сообщений с таймаутом."""
+async def start_producer() -> None:
+    """Запускает producer при старте приложения (один раз на процесс)."""
     global _producer
     if _producer is not None:
-        try:
-            _producer.flush(timeout=timeout)
-        except Exception as e:
-            print(f"Kafka flush timeout или ошибка: {e}")
+        return
+
+    _producer = AIOKafkaProducer(
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        client_id=KAFKA_CLIENT_ID,
+        value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode("utf-8"),
+        acks="all",
+        request_timeout_ms=5000,
+        max_block_ms=5000,
+    )
+    await _producer.start()
+    logger.info(
+        "Kafka producer запущен: bootstrap=%s, client_id=%s",
+        KAFKA_BOOTSTRAP_SERVERS,
+        KAFKA_CLIENT_ID,
+    )
+
+
+async def stop_producer() -> None:
+    """Останавливает producer при выключении приложения."""
+    global _producer
+    if _producer is None:
+        return
+    try:
+        await _producer.stop()
+        logger.info("Kafka producer остановлен")
+    finally:
+        _producer = None
+
+
+async def send_event(topic: str, value: dict) -> None:
+    """
+    Отправляет событие в Kafka и ждёт подтверждения от брокера.
+    Бросает RuntimeError, если producer не запущен.
+    Бросает исключение Kafka при ошибке отправки (таймаут, недоступность).
+    """
+    if _producer is None:
+        raise RuntimeError(
+            "Producer не запущен. Проверь, что start_producer() вызван в lifespan FastAPI."
+        )
+
+    try:
+        metadata = await _producer.send_and_wait(topic, value=value)
+        logger.info(
+            "Событие отправлено: topic=%s, partition=%s, offset=%s",
+            metadata.topic,
+            metadata.partition,
+            metadata.offset,
+        )
+    except Exception as e:
+        logger.error("Ошибка отправки в Kafka (topic=%s): %s", topic, e)
+        raise

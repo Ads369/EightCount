@@ -3,6 +3,9 @@ import logging
 from aiokafka import AIOKafkaProducer
 
 from kafka_integration.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_CLIENT_ID
+import asyncio
+import json
+import logging
 
 logger = logging.getLogger(__name__)
 

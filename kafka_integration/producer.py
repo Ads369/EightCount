@@ -23,7 +23,7 @@ async def start_producer() -> None:
         client_id=KAFKA_CLIENT_ID,
         value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode("utf-8"),
         acks="all",
-        request_timeout_ms=5000,
+        request_timeout_ms=15000,
     )
     await _producer.start()
     logger.info(

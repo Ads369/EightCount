@@ -8,14 +8,14 @@ import psycopg2
 
 from app import Application
 from exceptions import DbError
-from requests_dto import (
+from dto.requests_dto import (
     AddSubscriptionRequest,
     AddStudentRequest,
     CheckInIn,
     DeleteStudent,
     DeleteSubscription,
 )
-from responses_dto import StudentResponse, SubscriptionResponse
+from dto.responses_dto import StudentResponse, SubscriptionResponse
 
 from kafka_integration.producer import send_event
 

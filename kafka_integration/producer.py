@@ -13,7 +13,7 @@ _producer: AIOKafkaProducer | None = None
 
 
 async def start_producer() -> None:
-    """Запускает producer при старте приложения (один раз на процесс)."""
+    """Запускает producer при старте приложения."""
     global _producer
     if _producer is not None:
         return

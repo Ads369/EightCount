@@ -12,9 +12,7 @@ if _env_path.exists():
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9093")
 
 KAFKA_CLIENT_ID = "eightcount-producer"
-
 KAFKA_CONSUMER_GROUP = os.environ.get("KAFKA_CONSUMER_GROUP", "eightcount-group-v3")
-
 KAFKA_AUTO_OFFSET_RESET = "earliest"
 
 TOPIC_STUDENT_EVENTS = "student.events"

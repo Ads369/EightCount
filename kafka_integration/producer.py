@@ -45,7 +45,7 @@ async def stop_producer() -> None:
         _producer = None
 
 
-async def send_event(topic: str, value: dict) -> None:
+async def send_event(topic: str, key: str, value: dict, headers: list[tuple[str, bytes]] | None = None) -> None:
     """
     Отправляет событие в Kafka и ждёт подтверждения от брокера.
     Бросает RuntimeError, если producer не запущен.
@@ -54,11 +54,13 @@ async def send_event(topic: str, value: dict) -> None:
     if _producer is None:
         raise RuntimeError("Producer не запущен")
     try:
-        metadata = await asyncio.wait_for(
-            _producer.send_and_wait(topic, value=value),
-            timeout=5.0,
+        metadata = await _producer.send_and_wait(
+            topic,
+            key=key.encode("utf-8"),
+            value=value,
+            headers=headers,
         )
-        logger.info(...)
+        logger.debug("Событие отправляется")
     except asyncio.TimeoutError:
         logger.error("Таймаут отправки в Kafka (topic=%s)", topic)
         raise

@@ -6,7 +6,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Pydantic](https://img.shields.io/badge/Pydantic-2.0+-E92063.svg)](https://docs.pydantic.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1.svg)](https://www.postgresql.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-003B57.svg)](https://www.sqlite.org/)
+[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-231F20?logo=apachekafka&logoColor=white)](https://kafka.apache.org/)
+[![Kafka UI](https://img.shields.io/badge/Kafka%20UI-provectuslabs-6A5ACD)](https://github.com/provectus/kafka-ui)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Содержание
@@ -14,6 +15,7 @@
 - [О проекте](#о-проекте)
 - [Стек](#стек)
 - [Архитектура](#архитектура)
+- [Формат событий](#формат-событий)
 - [Установка](#установка)
 - [Запуск](#запуск)
 - [HTTP-коды](#http-коды)
@@ -37,6 +39,7 @@ EightCount — REST API для автоматизации учёта посещ�
 - **Единый баланс** — одна подписка на ученика.
 - **История операций** — видно, кто и когда приходил.
 - **Валидация данных** — мусор не попадёт в БД.
+- **Асинхронная обработка** — запись в БД через Kafka, клиент не ждёт.
 
 ## Стек
 
@@ -45,9 +48,12 @@ EightCount — REST API для автоматизации учёта посещ�
 | Python | 3.12 | Язык |
 | FastAPI | 0.100+ | Веб-фреймворк |
 | Pydantic | 2.0+ | Валидация данных |
-| PostgreSQL | 16 | Продакшен-БД |
+| PostgreSQL | 16 | База данных |
 | psycopg2 | latest | Драйвер PostgreSQL |
-| SQLite | 3 | Локальная БД (legacy) |
+| aiokafka | latest | Асинхронный producer |
+| kafka-python | latest | Синхронный consumer |
+| Apache Kafka | latest | Брокер сообщений |
+| Kafka UI | latest | Веб-интерфейс для Kafka |
 | uvicorn | latest | ASGI-сервер |
 | uv | latest | Управление зависимостями |
 | logging | stdlib | Логирование |
@@ -56,55 +62,151 @@ EightCount — REST API для автоматизации учёта посещ�
 
 Проект построен по принципу слоистой архитектуры. Каждый слой знает только про своё.
 
+### Синхронный путь (чтение)
+
+`GET`-эндпоинты читают данные напрямую из БД, минуя Kafka.
+
 ```
-+-------------------------------------------------------------+
-|                      Клиент (HTTP)                          |
-+-----------------------------+-------------------------------+
-                              | JSON
-                              v
-+-------------------------------------------------------------+
-|                    routes.py (FastAPI)                      |
-|  - HTTP-эндпоинты                                           |
-|  - Валидация через Pydantic                                 |
-|  - Преобразование исключений в HTTP-коды                    |
-+-----------------------------+-------------------------------+
-                              | вызовы service
-                              v
-+-------------------------------------------------------------+
-|                       service.py                            |
-|  - Бизнес-логика                                            |
-|  - Проверки (ученик есть, подписка есть, баланс > 0)        |
-|  - Логирование                                              |
-|  - Бросает DomainError                                      |
-+-----------------------------+-------------------------------+
-                              | вызовы repo (StorageRepository)
-                              v
-+-------------------------------------------------------------+
-|              postgres_repository.py / sql_repository.py     |
-|  - SQL-запросы                                              |
-|  - Ловит ошибки драйвера, превращает в DbError              |
-|  - Никакой бизнес-логики                                    |
-+-----------------------------+-------------------------------+
-                              | SQL
-                              v
-+-------------------------------------------------------------+
-|              PostgreSQL (prod) / SQLite (local)             |
-|  - students (id, name)                                      |
-|  - subscriptions (id, student_id, total_visits)             |
-+-------------------------------------------------------------+
+Клиент (HTTP)
+     |
+     | JSON
+     v
+routes.py (FastAPI)
+     |
+     | вызовы service
+     v
+service.py
+     |
+     | вызовы repo
+     v
+postgres_repository.py
+     |
+     | SQL
+     v
+PostgreSQL 16
 ```
 
-### Два бэкенда БД
+### Асинхронный путь (запись)
 
-Проект умеет работать с двумя СУБД. Выбор происходит при старте через переменные окружения:
+`POST`/`DELETE`-эндпоинты отправляют событие в Kafka и сразу отвечают `{"status": "queued"}`. Запись в БД выполняет consumer.
+
+```
+Клиент (HTTP)
+     |
+     | JSON
+     v
+routes.py (FastAPI)
+     |
+     | producer.send_event(topic, key, value, headers)
+     v
+producer.py (aiokafka)
+     |
+     | событие (key=event_id, headers=topic, value={action, data})
+     v
+Apache Kafka
+     |
+     | consumer.poll()
+     v
+consumer.py
+     |
+     | process_event(value, key, topic_from_headers)
+     v
+service.py
+     |
+     | вызовы repo
+     v
+postgres_repository.py
+     |
+     | SQL
+     v
+PostgreSQL 16
+```
+
+### Бэкенд БД
+
+Проект работает на PostgreSQL. Подключение задаётся через переменные окружения:
 
 | Переменная | Значение | Что используется |
 |---|---|---|
-| `DB_BACKEND` | `postgres` | `PostgresRepository` (продакшен) |
-| `DB_BACKEND` | `sqlite` (по умолчанию) | `SqliteRepository` (локальная разработка) |
 | `DATABASE_URL` | DSN | Строка подключения для PostgreSQL |
 
-`sqlite3`-репозиторий — это **legacy-код для локального запуска**. Продакшен всегда работает на PostgreSQL: там есть `ON DELETE CASCADE`, `FOR UPDATE` для блокировок и `ON CONFLICT ... DO UPDATE` для upsert-подписок. SQLite-версия поддерживает только базовый функционал и не гарантирует ту же защиту от гонок при параллельных запросах, поэтому использовать её в проде не нужно.
+Продакшен работает на PostgreSQL: там есть `ON DELETE CASCADE`, `FOR UPDATE` для блокировок и `ON CONFLICT ... DO UPDATE` для upsert-подписок. Это гарантирует защиту от гонок при параллельных запросах.
+
+## Формат событий
+
+События в Kafka имеют строгую структуру: **`event_id` → Key**, **`topic` → Headers**, **полезная нагрузка → Value**.
+
+### Key
+
+Уникальный идентификатор события (UUID). Используется для идемпотентности: consumer проверяет `processed_events` по `event_id` и пропускает дубли.
+
+```
+17b7eef9-b2be-49ae-905a-1d61e697f340
+```
+
+### Headers
+
+Содержат имя топика, из которого пришло событие. Consumer читает `topic` из headers и по нему выбирает handler.
+
+```
+topic: checkin.events
+```
+
+### Value
+
+Только полезная нагрузка: `action` и `data`. Без `event_id`, `topic`, `timestamp`.
+
+```json
+{
+  "action": "checkin.processed",
+  "data": {
+    "owner": "Лёха5"
+  }
+}
+```
+
+### Примеры по топикам
+
+**`student.events`** — создание/удаление ученика:
+
+```json
+{
+  "action": "student.created",
+  "data": {"name": "Лёха"}
+}
+```
+
+```json
+{
+  "action": "student.deleted",
+  "data": {"name": "Лёха"}
+}
+```
+
+**`subscription.events`** — создание/удаление подписки:
+
+```json
+{
+  "action": "subscription.created",
+  "data": {"owner": "Лёха", "total_visits": 10}
+}
+```
+
+```json
+{
+  "action": "subscription.deleted",
+  "data": {"owner": "Лёха"}
+}
+```
+
+**`checkin.events`** — списание занятия:
+
+```json
+{
+  "action": "checkin.processed",
+  "data": {"owner": "Лёха"}
+}
+```
 
 ## Установка
 
@@ -112,7 +214,7 @@ EightCount — REST API для автоматизации учёта посещ�
 
 - Python 3.10+
 - pip или uv
-- PostgreSQL 16 (для продакшена) или SQLite (для локальной разработки)
+- PostgreSQL 16
 
 ### Шаги
 
@@ -131,7 +233,7 @@ venv\Scripts\activate
 source venv/bin/activate
 
 # 4. Установить зависимости
-pip install fastapi uvicorn pydantic psycopg2-binary
+pip install fastapi uvicorn pydantic psycopg2-binary aiokafka kafka-python
 ```
 
 Альтернатива — через `uv`:
@@ -141,16 +243,6 @@ uv sync
 ```
 
 ## Запуск
-
-### Локально на SQLite (legacy)
-
-По умолчанию приложение стартует на SQLite и создаёт файл `EightCount.db` в рабочей директории.
-
-```bash
-uvicorn main:app --reload
-```
-
-Сервер запустится на http://127.0.0.1:8000.
 
 ### Продакшен (Docker)
 
@@ -164,14 +256,28 @@ docker compose up -d --build
 ### Продакшен (без Docker)
 
 ```bash
-DB_BACKEND=postgres \
 DATABASE_URL=postgresql://user:pass@host:5432/dbname \
+KAFKA_BOOTSTRAP_SERVERS=localhost:9093 \
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+### Consumer (отдельный процесс)
+
+Consumer запускается **отдельно** от FastAPI — на хосте или в отдельном контейнере. Он читает из Kafka и пишет в БД.
+
+```bash
+uv run python -m kafka_integration.consumer
 ```
 
 ### Интерактивная документация
 
 - Swagger UI: http://127.0.0.1:8000/docs
+
+### Kafka UI
+
+- Kafka UI: http://127.0.0.1:8080
+
+Позволяет просматривать топики, сообщения (Key, Headers, Value), consumer groups и lag.
 
 ## HTTP-коды
 
@@ -182,6 +288,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 | 404 | Ученик / подписка не найдены, занятия закончились |
 | 409 | Ученик с таким именем уже существует |
 | 500 | Ошибка БД |
+| 502 | Не удалось отправить событие в Kafka |
 | 503 | БД временно недоступна |
 
 ## Логирование
@@ -193,9 +300,9 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 | Уровень | Когда |
 |---|---|
 | DEBUG | Поиск в БД, отладочная информация |
-| INFO | Запросы, успешные операции |
+| INFO | Запросы, успешные операции, отправка событий |
 | WARNING | Бизнес-ошибки (ученик не найден, занятия закончились) |
-| ERROR | Ошибки БД |
+| ERROR | Ошибки БД, ошибки отправки в Kafka |
 
 ## Соавторы
 

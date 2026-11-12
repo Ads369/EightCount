@@ -28,18 +28,15 @@ logger = logging.getLogger(__name__)
 
 
 async def _emit_event(topic: str, action: str, data: dict) -> None:
-    """Отправляет событие в Kafka. Структура: data: {action, data}."""
-    event = {
-        "event_id": str(uuid.uuid4()),
-        "topic": topic,
-        "data": {
-            "action": action,
-            "data": data,
-        },
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+    """Отправляет событие в Kafka. Key = event_id, Headers = topic, Value = {action, data}."""
+    event_id = str(uuid.uuid4())
+    value = {
+        "action": action,
+        "data": data,
     }
+    headers = [("topic", topic.encode("utf-8"))]
     try:
-        await send_event(topic, event)
+        await send_event(topic, key=event_id, value=value, headers=headers)
     except Exception as e:
         logger.error(f"Не удалось отправить событие в Kafka: {e}")
         raise HTTPException(status_code=502, detail="Не удалось отправить событие в Kafka")

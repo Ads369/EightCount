@@ -1,5 +1,4 @@
 import json
-from datetime import datetime, timezone
 
 from kafka import KafkaConsumer
 
@@ -20,9 +19,9 @@ service = application.service
 repo = service.repo
 print(f"[DEBUG] repo = {type(repo).__name__}", flush=True)
 
-def handle_student_event(data: dict) -> None:
-    action = data.get("action")
-    name = data.get("data", {}).get("name")
+
+def handle_student_event(action: str, data: dict) -> None:
+    name = data.get("name")
     if action == "student.created":
         try:
             service.add_student(name)
@@ -39,10 +38,9 @@ def handle_student_event(data: dict) -> None:
         print(f"[consumer] Неизвестное действие для студента: {action}", flush=True)
 
 
-def handle_subscription_event(data: dict) -> None:
-    action = data.get("action")
-    owner = data.get("data", {}).get("owner")
-    total_visits = data.get("data", {}).get("total_visits")
+def handle_subscription_event(action: str, data: dict) -> None:
+    owner = data.get("owner")
+    total_visits = data.get("total_visits")
     if action == "subscription.created":
         try:
             service.add_subscription(owner, total_visits)
@@ -60,7 +58,7 @@ def handle_subscription_event(data: dict) -> None:
 
 
 def handle_checkin_event(data: dict) -> None:
-    owner = data.get("data", {}).get("owner")
+    owner = data.get("owner")
     try:
         remaining = service.check_in(owner)
         print(f"[consumer] Списание для {owner}, осталось: {remaining}", flush=True)
@@ -68,29 +66,29 @@ def handle_checkin_event(data: dict) -> None:
         print(f"[consumer] Ошибка списания для {owner}: {e}", flush=True)
 
 
-def process_event(raw_message: str) -> None:
+def process_event(raw_message: str, event_id: str | None, topic: str) -> None:
+    """Разбирает value и обрабатывает событие. event_id из key, topic из headers."""
+    if not event_id:
+        print("[consumer] Сообщение без key (event_id), пропускаем", flush=True)
+        return
+
     try:
         event = json.loads(raw_message)
     except json.JSONDecodeError as e:
         print(f"[consumer] Ошибка парсинга JSON: {e}", flush=True)
         return
 
-    event_id = event.get("event_id")
-    if not event_id:
-        print("[consumer] Сообщение без event_id, пропускаем", flush=True)
-        return
-
     if repo.is_event_processed(event_id):
         print(f"[consumer] Событие {event_id} уже обрабатывалось, пропускаем", flush=True)
         return
 
-    topic = event.get("topic", "")
+    action = event.get("action")
     data = event.get("data", {})
 
     if "student" in topic:
-        handle_student_event(data)
+        handle_student_event(action, data)
     elif "subscription" in topic:
-        handle_subscription_event(data)
+        handle_subscription_event(action, data)
     elif "checkin" in topic:
         handle_checkin_event(data)
     else:
@@ -105,7 +103,6 @@ def start_consumer() -> None:
         group_id=KAFKA_CONSUMER_GROUP,
         auto_offset_reset=KAFKA_AUTO_OFFSET_RESET,
         request_timeout_ms=5000,
-        consumer_timeout_ms=1000,
     )
     consumer.subscribe(ALL_TOPICS)
 
@@ -121,8 +118,16 @@ def start_consumer() -> None:
                 for message in messages:
                     try:
                         raw_value = message.value.decode("utf-8") if message.value else ""
-                        print(f"[consumer] Получено из {message.topic}: {raw_value}", flush=True)
-                        process_event(raw_value)
+                        event_id = message.key.decode("utf-8") if message.key else None
+                        headers = dict(message.headers or [])
+                        topic_header = headers.get("topic", b"").decode("utf-8")
+                        topic = topic_header or message.topic
+                        print(
+                            f"[consumer] Получено из {message.topic}: "
+                            f"key={event_id}, headers={headers}, value={raw_value}",
+                            flush=True,
+                        )
+                        process_event(raw_value, event_id, topic)
                     except Exception as e:
                         print(f"[consumer] Ошибка обработки сообщения: {e}", flush=True)
     except KeyboardInterrupt:
